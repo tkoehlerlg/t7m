@@ -49,7 +49,7 @@ export abstract class AbstractTransformer<
      * @param params The parameters for the transformation.
      * @returns The transformed output object.
      */
-    public transform(
+    public async transform(
         params: {
             input: TInput
             includes?: Includes[]
@@ -64,7 +64,7 @@ export abstract class AbstractTransformer<
      * @param params The parameters for the transformation.
      * @returns The transformed output objects.
      */
-    public transformMany(
+    public async transformMany(
         params: {
             inputs: TInput[]
             includes?: Includes[]
@@ -87,7 +87,12 @@ export abstract class AbstractTransformer<
             const validIncludes = includes.filter(include => include in this.includesMap)
             await Promise.all(
                 validIncludes.map(async include => {
-                    data[include] = await this.includesMap[include](input, props)
+                    try {
+                        data[include] = await this.includesMap[include](input, props)
+                    } catch (error) {
+                        // Re-throw the error to maintain the expected behavior
+                        throw new Error(`Error in include function '${String(include)}': ${error instanceof Error ? error.message : String(error)}`)
+                    }
                 })
             )
         }

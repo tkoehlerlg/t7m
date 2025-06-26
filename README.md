@@ -167,7 +167,7 @@ class UserTransformer extends AbstractTransformer<User, PublicUser, UserTransfor
 
     protected includesMap = {
         // Transformer can also be nested
-        posts: (input: User, props: UserTransformerProps) =>
+        posts: async (input: User, props: UserTransformerProps) =>
             new PostTransformer().transformMany({ inputs: props.db.posts }),
         // posts: (input: User) => [{ title: 'Post 1', content: 'Content 1' }],
     }

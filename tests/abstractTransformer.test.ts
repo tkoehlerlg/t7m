@@ -103,8 +103,8 @@ describe('AbstractTransformer', () => {
             })
         })
 
-        it('should transform multiple inputs', () => {
-            const results = transformer.transformMany({ inputs: testUsers })
+        it('should transform multiple inputs', async () => {
+            const results = await transformer.transformMany({ inputs: testUsers })
 
             expect(results).toHaveLength(2)
             expect(results[0]).toEqual({

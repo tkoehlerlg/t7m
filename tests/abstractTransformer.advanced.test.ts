@@ -146,7 +146,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
     })
 
     describe('Performance considerations', () => {
-        it('should efficiently handle large batch transformations', () => {
+        it('should efficiently handle large batch transformations', async () => {
             const transformer = new AdvancedTransformer()
             const largeInputSet = Array.from({ length: 1000 }, (_, i) => ({
                 ...testInput,
@@ -161,7 +161,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
             }))
 
             const start = performance.now()
-            const results = transformer.transformMany({
+            const results = await transformer.transformMany({
                 inputs: largeInputSet,
                 props: {
                     format: 'short',
@@ -210,7 +210,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
             }
         }
 
-        it('should handle errors in include functions gracefully', () => {
+        it('should handle errors in include functions gracefully', async () => {
             const transformer = new ErrorProneTransformer()
 
             // Test with input that will cause errors
@@ -242,7 +242,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
             }).not.toThrow()
 
             // Should throw when problematic includes are used
-            expect(() => {
+            await expect(
                 transformer.transform({
                     input: problematicInput,
                     props: {
@@ -252,7 +252,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
                     },
                     includes: ['computed'],
                 })
-            }).toThrow()
+            ).rejects.toThrow('Error in include function')
         })
     })
 
@@ -291,12 +291,12 @@ describe('AbstractTransformer - Advanced Tests', () => {
             }
         }
 
-        it('should call transformation functions correct number of times', () => {
+        it('should call transformation functions correct number of times', async () => {
             const transformer = new MemoizedTransformer()
             const inputs = [testInput, { ...testInput, id: 'test-456' }]
 
             // Transform multiple times with same includes
-            transformer.transformMany({
+            await transformer.transformMany({
                 inputs,
                 includes: ['computed', 'formatted'],
             })
