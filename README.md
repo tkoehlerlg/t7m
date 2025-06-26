@@ -196,9 +196,32 @@ console.log(publicUser)
 // Returns: { name: 'John Doe', email: 'john.doe@example.com', posts: [{ title: 'Post 1', content: 'Content 1' }] }
 ```
 
+### Hono
+
+```typescript
+import { Hono } from 'hono'
+import { t7mMiddleware } from 't7m/hono'
+
+const app = new Hono()
+
+app.use(t7mMiddleware())
+
+app.get('/users', async c => {
+    const users = await db.users
+    return c.transformMany(users, new UserTransformer(), { status: 200 }) // status is optional; maps to c.json(transformedUsers, 200)
+    // c.transform for single objects
+})
+```
+
+### Elysia
+
+To be developed. (In the next week)
+
 ## Performance
 
 I maximized performance by letting all include functions run in parallel. Async requests can simply be made in both include and data functions, as all functions are allowed to be async aswell and run concurrently. Notably, the data function executes before all include functions, allowing you to use its data in your include functions. This is a common pattern when you need to fetch additional data based on the transformed data.
+
+Performance can also be increased if transformers are used multiple times by declaring them as a const and reusing them.
 
 ## Security
 

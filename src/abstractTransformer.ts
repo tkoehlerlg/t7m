@@ -44,6 +44,8 @@ export abstract class AbstractTransformer<
         [K in Includes]: IncludeFunction<TInput, TOutput, K, Props>
     }
 
+    // Transform functions
+
     /**
      * Transforms a single input object.
      * @param params The parameters for the transformation.
@@ -56,7 +58,7 @@ export abstract class AbstractTransformer<
         } & (Props extends undefined ? { props?: Props } : { props: Props })
     ): Promise<TOutput> {
         const { input, props, includes } = params
-        return this._transform(input, props as Props, includes)
+        return this.__transform(input, props as Props, includes)
     }
 
     /**
@@ -71,8 +73,32 @@ export abstract class AbstractTransformer<
         } & (Props extends undefined ? { props?: Props } : { props: Props })
     ): Promise<TOutput[]> {
         const { inputs, props, includes } = params
-        return Promise.all(inputs.map(input => this._transform(input, props as Props, includes)))
+        return Promise.all(inputs.map(input => this.__transform(input, props as Props, includes)))
     }
+
+    // Generic functions
+
+    /**
+     * Transforms a single input object. (Easier to use in generic functions)
+     * @param params The parameters for the transformation.
+     * @returns The transformed output object.
+     */
+    public async _transform(params: { input: TInput; props: Props; includes?: Includes[] }): Promise<TOutput> {
+        const { input, props, includes } = params
+        return this.__transform(input, props, includes)
+    }
+
+    /**
+     * Transforms multiple input objects. (Easier to use in generic functions)
+     * @param params The parameters for the transformation.
+     * @returns The transformed output objects.
+     */
+    public async _transformMany(params: { inputs: TInput[]; props: Props; includes?: Includes[] }): Promise<TOutput[]> {
+        const { inputs, props, includes } = params
+        return Promise.all(inputs.map(input => this.__transform(input, props, includes)))
+    }
+
+    // Internal transformation function
 
     /**
      * Transforms a single input object.
@@ -81,7 +107,7 @@ export abstract class AbstractTransformer<
      * @param includes Optional array of includes to transform.
      * @returns The transformed output object.
      */
-    private async _transform(input: TInput, props: Props, includes?: Includes[]): Promise<TOutput> {
+    private async __transform(input: TInput, props: Props, includes?: Includes[]): Promise<TOutput> {
         const data: TOutput = await this.data(input, props)
         if (includes && includes.length > 0) {
             const validIncludes = includes.filter(include => include in this.includesMap)
