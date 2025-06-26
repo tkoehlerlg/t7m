@@ -36,7 +36,7 @@ export interface TransformRespond {
         transformer: AbstractTransformer<TInput, TOutput, any, any>,
         status?: U,
         headers?: HeaderRecord
-    ): JSONRespondReturn<TOutput, U>
+    ): Promise<JSONRespondReturn<TOutput, U>>
 }
 
 export interface TransformManyRespond {
@@ -49,5 +49,5 @@ export interface TransformManyRespond {
         transformer: AbstractTransformer<TInput, TOutput, any, any>,
         status?: U,
         headers?: HeaderRecord
-    ): JSONRespondReturn<TOutput[], U>
+    ): Promise<JSONRespondReturn<TOutput[], U>>
 }

@@ -10,7 +10,7 @@ import type { OnlyPossiblyUndefined } from './typeHelper'
 export type IncludeFunction<TInput, TOutput, K extends keyof TOutput, Props> = (
     input: TInput,
     props: Props
-) => TOutput[K]
+) => Promise<TOutput[K]> | TOutput[K]
 
 /**
  * Abstract transformer class.
@@ -54,7 +54,7 @@ export abstract class AbstractTransformer<
             input: TInput
             includes?: Includes[]
         } & (Props extends undefined ? { props?: Props } : { props: Props })
-    ): TOutput {
+    ): Promise<TOutput> {
         const { input, props, includes } = params
         return this._transform(input, props as Props, includes)
     }
@@ -69,9 +69,9 @@ export abstract class AbstractTransformer<
             inputs: TInput[]
             includes?: Includes[]
         } & (Props extends undefined ? { props?: Props } : { props: Props })
-    ): TOutput[] {
+    ): Promise<TOutput[]> {
         const { inputs, props, includes } = params
-        return inputs.map(input => this._transform(input, props as Props, includes))
+        return Promise.all(inputs.map(input => this._transform(input, props as Props, includes)))
     }
 
     /**
@@ -81,13 +81,15 @@ export abstract class AbstractTransformer<
      * @param includes Optional array of includes to transform.
      * @returns The transformed output object.
      */
-    private _transform(input: TInput, props: Props, includes?: Includes[]): TOutput {
-        const data = this.data(input, props)
+    private async _transform(input: TInput, props: Props, includes?: Includes[]): Promise<TOutput> {
+        const data: TOutput = await this.data(input, props)
         if (includes && includes.length > 0) {
             const validIncludes = includes.filter(include => include in this.includesMap)
-            for (const include of validIncludes) {
-                data[include] = this.includesMap[include](input, props)
-            }
+            await Promise.all(
+                validIncludes.map(async include => {
+                    data[include] = await this.includesMap[include](input, props)
+                })
+            )
         }
         return data
     }

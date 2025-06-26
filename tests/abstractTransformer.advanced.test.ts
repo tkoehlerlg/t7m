@@ -88,8 +88,8 @@ describe('AbstractTransformer - Advanced Tests', () => {
     describe('Complex prop-based transformations', () => {
         const transformer = new AdvancedTransformer()
 
-        it('should handle short format with computed values', () => {
-            const result = transformer.transform({
+        it('should handle short format with computed values', async () => {
+            const result = await transformer.transform({
                 input: testInput,
                 props: {
                     format: 'short',
@@ -102,8 +102,8 @@ describe('AbstractTransformer - Advanced Tests', () => {
             expect(result.computed).toBe(84) // 42 * 2
         })
 
-        it('should handle long format without computed values', () => {
-            const result = transformer.transform({
+        it('should handle long format without computed values', async () => {
+            const result = await transformer.transform({
                 input: testInput,
                 props: {
                     format: 'long',
@@ -116,8 +116,8 @@ describe('AbstractTransformer - Advanced Tests', () => {
             expect(result.computed).toBeUndefined()
         })
 
-        it('should apply enrichment based on level', () => {
-            const lowLevel = transformer.transform({
+        it('should apply enrichment based on level', async () => {
+            const lowLevel = await transformer.transform({
                 input: testInput,
                 props: {
                     format: 'short',
@@ -127,7 +127,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
                 includes: ['enriched'],
             })
 
-            const highLevel = transformer.transform({
+            const highLevel = await transformer.transform({
                 input: testInput,
                 props: {
                     format: 'short',
@@ -365,10 +365,10 @@ describe('AbstractTransformer - Advanced Tests', () => {
             }
         }
 
-        it('should handle discriminated union types correctly', () => {
+        it('should handle discriminated union types correctly', async () => {
             const transformer = new DiscriminatedTransformer()
 
-            const userResult = transformer.transform({
+            const userResult = await transformer.transform({
                 input: {
                     type: 'user',
                     userId: 'u-123',
@@ -377,7 +377,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
                 includes: ['details'],
             })
 
-            const adminResult = transformer.transform({
+            const adminResult = await transformer.transform({
                 input: {
                     type: 'admin',
                     adminId: 'a-456',

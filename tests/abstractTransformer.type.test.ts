@@ -64,7 +64,7 @@ const basicInstance = new BasicTransformer()
 const _basicResult = basicInstance.transform({ input: { id: 1, name: 'test', email: 'test@test.com', role: 'user' } })
 
 // Type tests for basic transformer
-type test_BasicResult = Expect<Equal<typeof _basicResult, PublicUser>>
+type test_BasicResult = Expect<Equal<typeof _basicResult, Promise<PublicUser>>>
 type test_BasicTransformParams = Expect<
     Equal<
         Parameters<typeof basicInstance.transform>[0],
@@ -214,9 +214,9 @@ const complexResult = complexInstance.transform({
     includes: ['author', 'analytics'],
 })
 
-type test_ComplexIncludes = Expect<Equal<(typeof complexResult)['author'], PublicUser | undefined>>
+type test_ComplexIncludes = Expect<Equal<Awaited<typeof complexResult>['author'], PublicUser | undefined>>
 type test_ComplexAnalytics = Expect<
-    Equal<(typeof complexResult)['analytics'], { views: number; likes: number; shares: number } | undefined>
+    Equal<Awaited<typeof complexResult>['analytics'], { views: number; likes: number; shares: number } | undefined>
 >
 
 // Test: Transform many preserves types
@@ -228,7 +228,7 @@ const manyResults = includesInstance.transformMany({
     includes: ['avatar'],
 })
 
-type test_TransformManyResult = Expect<Equal<typeof manyResults, PublicUser[]>>
+type test_TransformManyResult = Expect<Equal<Awaited<typeof manyResults>, PublicUser[]>>
 
 // Test: Empty includes behavior
 class EmptyIncludesTransformer extends AbstractTransformer<User, PublicUser> {
