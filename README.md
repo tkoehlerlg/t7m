@@ -113,7 +113,7 @@ console.log(publicUser)
 
 ### Usage with Props
 
-You can use props to pass additional data to the transformer, for example a database connection. If you worry about performance on large datasets, I got you covered since all include functions run in parallel!
+You can use props to pass additional data to the transformer, for example a database connection. If you worry about performance on large datasets, I got you covered since all include functions run in parallel! Props can also be way more than just database connections with for example a redection parameter you can simply opt in or out for redacting sensitive data.
 
 ```typescript
 import { AbstractTransformer } from 't7m'
@@ -199,3 +199,7 @@ console.log(publicUser)
 ## Performance
 
 I maximized performance by letting all include functions run in parallel. Async requests can simply be made in both include and data functions, as all functions are allowed to be async aswell and run concurrently. Notably, the data function executes before all include functions, allowing you to use its data in your include functions. This is a common pattern when you need to fetch additional data based on the transformed data.
+
+## Security
+
+This package is not only a transformer for easier output transformation, but also a helper to prevent common security issues like exposing sensitive data or database ids. It helps you to prevent these issues by letting u describe how to transform your data and then using it everywhere. The idea is that you ask yourself if you have to transform any data if you shouldn't write a transformer for it so you always use them and thereby prevent forgetting to transform sensitive data right or transforming data differently in different places.
