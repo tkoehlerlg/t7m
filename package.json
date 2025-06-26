@@ -1,0 +1,60 @@
+{
+    "name": "t7m",
+    "module": "src/index.ts",
+    "type": "module",
+    "author": {
+        "name": "Torben Koehler & Jona Schwarz"
+    },
+    "license": "MIT-NSR",
+    "version": "0.0.4",
+    "description": "Transformer for Hono",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "require": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        },
+        "./hono": {
+            "import": "./dist/hono/index.js",
+            "require": "./dist/hono/index.js",
+            "types": "./dist/hono/index.d.ts"
+        }
+    },
+    "typesVersions": {
+        "*": {
+            "hono": [
+                "./dist/hono/index.d.ts"
+            ]
+        }
+    },
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsc --declaration --emitDeclarationOnly --outDir dist && NODE_ENV=production bun build src/index.ts src/hono/index.ts --outdir dist --target node --external hono",
+        "dev": "bun --watch src/index.ts",
+        "test": "bun test",
+        "test:coverage": "bun test --coverage --coverage-reporter=lcov --coverage-reporter=text",
+        "typecheck": "tsc --noEmit",
+        "lint": "eslint src tests",
+        "prettier": "prettier --write .",
+        "prepublishOnly": "bun run prettier && NODE_ENV=production bun run build && bun run test"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "@typescript-eslint/eslint-plugin": "^8.35.0",
+        "@typescript-eslint/parser": "^8.35.0",
+        "eslint": "^9.29.0",
+        "jiti": "^2.4.2"
+    },
+    "peerDependencies": {
+        "typescript": "^5",
+        "hono": "^3 || ^4"
+    },
+    "peerDependenciesMeta": {
+        "hono": {
+            "optional": true
+        }
+    }
+}
