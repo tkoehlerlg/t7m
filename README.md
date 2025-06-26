@@ -13,7 +13,11 @@ The ultimate transformer library for Elysia and Hono.
 
 ### Why t7m?
 
+I created t7m because I was tired of writing the same transformation code over and over again. I also wanted to make it type safe and secure. Try it out and let me know what you think!
+
 ### Where to use t7m?
+
+I recommend using t7m for any API that returns data from a database. It is especially useful for APIs that use includes to return related data. I focused on a serverless environment while building this library but it should work for any environment.
 
 ## Installation 📦
 
