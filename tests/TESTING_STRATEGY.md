@@ -38,7 +38,7 @@ class BasicTransformer extends AbstractTransformer<Input, Output> {
     protected data(input: Input): Output {
         // Transform logic
     }
-    protected override includesMap = {}
+    protected includesMap = {}
 }
 ```
 
@@ -51,7 +51,7 @@ class TransformerWithIncludes extends AbstractTransformer<Input, Output> {
     protected data(input: Input): Output {
         // Base transformation
     }
-    protected override includesMap = {
+    protected includesMap = {
         optionalProp: (input: Input) => computeValue(input),
     }
 }

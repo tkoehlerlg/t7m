@@ -66,7 +66,7 @@ class BasicTransformer extends AbstractTransformer<Input, Output> {
     protected data(input: Input): Output {
         /* ... */
     }
-    protected override includesMap = {}
+    protected includesMap = {}
 }
 ```
 
@@ -77,7 +77,7 @@ class TransformerWithIncludes extends AbstractTransformer<Input, Output> {
     protected data(input: Input): Output {
         /* ... */
     }
-    protected override includesMap = {
+    protected includesMap = {
         optionalProp: input => computeValue(input),
     }
 }
@@ -90,7 +90,7 @@ class TransformerWithProps extends AbstractTransformer<Input, Output, Props> {
     protected data(input: Input, props: Props): Output {
         /* ... */
     }
-    protected override includesMap = {
+    protected includesMap = {
         optionalProp: (input, props) => computeWithProps(input, props),
     }
 }

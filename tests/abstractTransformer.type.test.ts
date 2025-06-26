@@ -57,7 +57,7 @@ class BasicTransformer extends AbstractTransformer<User, PublicUser> {
         }
     }
 
-    protected override includesMap = {}
+    protected includesMap = {}
 }
 
 const basicInstance = new BasicTransformer()
@@ -84,7 +84,7 @@ class UserTransformerWithIncludes extends AbstractTransformer<User, PublicUser> 
         }
     }
 
-    protected override includesMap = {
+    protected includesMap = {
         avatar: (input: User) => `https://avatar.com/${input.id}`,
         profile: (input: User) => ({
             bio: `User ${input.name}`,
@@ -121,7 +121,7 @@ class StrictTransformer extends AbstractTransformer<User, StrictUser> {
         }
     }
 
-    protected override includesMap = {
+    protected includesMap = {
         bio: (input: User) => `Bio for ${input.name}`,
         // The following would cause a type error:
         // name: (input: User) => input.name, // Error: 'name' is not optional
@@ -147,7 +147,7 @@ class PropsTransformer extends AbstractTransformer<User, PublicUser, TransformPr
         }
     }
 
-    protected override includesMap = {
+    protected includesMap = {
         profile: (input: User, props: TransformProps) => ({
             bio: `User from ${props.locale}`,
             location: props.timezone,
@@ -195,7 +195,7 @@ class ComplexTransformer extends AbstractTransformer<Article, ComplexOutput, { i
         }
     }
 
-    protected override includesMap = {
+    protected includesMap = {
         author: (input: Article) => ({
             name: 'Author Name',
             email: 'author@example.com',
@@ -239,7 +239,7 @@ class EmptyIncludesTransformer extends AbstractTransformer<User, PublicUser> {
         }
     }
 
-    protected override includesMap = {} // No includes defined
+    protected includesMap = {} // No includes defined
 }
 
 const emptyIncludesInstance = new EmptyIncludesTransformer()

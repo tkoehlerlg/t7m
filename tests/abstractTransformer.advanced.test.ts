@@ -55,7 +55,7 @@ class AdvancedTransformer extends AbstractTransformer<ComplexInput, ComplexOutpu
         return base
     }
 
-    protected override includesMap = {
+    protected includesMap = {
         formatted: (input: ComplexInput, props: AdvancedProps) => {
             const date = input.timestamps.created
             return props.format === 'short' ? date.toLocaleDateString() : date.toISOString()
@@ -196,7 +196,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
                 }
             }
 
-            protected override includesMap = {
+            protected includesMap = {
                 computed: (input: ComplexInput) => {
                     // Intentionally access potentially undefined property
                     return input.data.nested.metadata!.missingKey.value * 2
@@ -272,7 +272,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
                 }
             }
 
-            protected override includesMap = {
+            protected includesMap = {
                 computed: (input: ComplexInput) => {
                     this.includeCallCounts.computed++
                     return input.data.nested.value * 2
@@ -345,7 +345,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
                 return base as AccountOutput
             }
 
-            protected override includesMap = {
+            protected includesMap = {
                 details: (input: AccountInput) => {
                     if (input.type === 'user') {
                         return {

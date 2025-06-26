@@ -32,7 +32,7 @@ class BasicUserTransformer extends AbstractTransformer<User, PublicUser> {
         }
     }
 
-    protected override includesMap = {}
+    protected includesMap = {}
 }
 
 // Transformer with optional includes
@@ -44,7 +44,7 @@ class UserTransformerWithIncludes extends AbstractTransformer<User, PublicUser> 
         }
     }
 
-    protected override includesMap = {
+    protected includesMap = {
         avatar: (input: User) => `https://avatar.com/${input.id}`,
         metadata: (input: User) => ({ role: input.role, id: input.id }),
     }
@@ -65,7 +65,7 @@ class UserTransformerWithProps extends AbstractTransformer<User, PublicUser, Tra
         return result
     }
 
-    protected override includesMap = {
+    protected includesMap = {
         metadata: (input: User, props: TransformProps) => ({
             role: input.role,
             avatarSize: props.avatarSize,
