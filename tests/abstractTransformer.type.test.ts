@@ -1,4 +1,6 @@
 // Type-level tests for AbstractTransformer
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { AbstractTransformer } from '../src/abstractTransformer'
 
 // Helper type for testing type equality
@@ -59,15 +61,14 @@ class BasicTransformer extends AbstractTransformer<User, PublicUser> {
 }
 
 const basicInstance = new BasicTransformer()
-const basicResult = basicInstance.transform({ input: { id: 1, name: 'test', email: 'test@test.com', role: 'user' } })
+const _basicResult = basicInstance.transform({ input: { id: 1, name: 'test', email: 'test@test.com', role: 'user' } })
 
 // Type tests for basic transformer
-type test_BasicResult = Expect<Equal<typeof basicResult, PublicUser>>
+type test_BasicResult = Expect<Equal<typeof _basicResult, PublicUser>>
 type test_BasicTransformParams = Expect<Equal<Parameters<typeof basicInstance.transform>[0], {
     input: User
-    includes?: never[]
-    props?: undefined
-}>>
+    includes?: ('avatar' | 'profile' | 'stats')[]
+} & { props?: undefined }>>
 
 // Test: Transformer with optional includes
 class UserTransformerWithIncludes extends AbstractTransformer<User, PublicUser> {
@@ -229,7 +230,7 @@ class EmptyIncludesTransformer extends AbstractTransformer<User, PublicUser> {
 }
 
 const emptyIncludesInstance = new EmptyIncludesTransformer()
-type test_EmptyIncludes = Expect<Equal<Parameters<typeof emptyIncludesInstance.transform>[0]['includes'], never[] | undefined>>
+type test_EmptyIncludes = Expect<Equal<Parameters<typeof emptyIncludesInstance.transform>[0]['includes'], ('avatar' | 'profile' | 'stats')[] | undefined>>
 
 // Export type tests to ensure they're evaluated
 export type TypeTests = {

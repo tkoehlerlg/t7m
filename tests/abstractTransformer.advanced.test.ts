@@ -1,4 +1,7 @@
-import { describe, it, expect, mock } from 'bun:test'
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { describe, it, expect } from 'bun:test'
 import { AbstractTransformer } from '../src/abstractTransformer'
 
 // Advanced test scenarios for AbstractTransformer
@@ -186,7 +189,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
 
     describe('Include function error handling', () => {
         class ErrorProneTransformer extends AbstractTransformer<ComplexInput, ComplexOutput, AdvancedProps> {
-            protected data(input: ComplexInput, props: AdvancedProps): ComplexOutput {
+            protected data(input: ComplexInput, _props: AdvancedProps): ComplexOutput {
                 return {
                     id: input.id,
                     primary: input.data.primary,
