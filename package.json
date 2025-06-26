@@ -8,6 +8,14 @@
     "license": "MIT-NSR",
     "version": "0.0.5",
     "description": "Transformer for Elysia and Hono",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/tkoehlerlg/t7m.git"
+    },
+    "bugs": {
+        "url": "https://github.com/tkoehlerlg/t7m/issues"
+    },
+    "homepage": "https://github.com/tkoehlerlg/t7m#readme",
     "exports": {
         ".": {
             "import": "./dist/index.js",
@@ -61,5 +69,16 @@
         "hono": {
             "optional": true
         }
-    }
+    },
+    "keywords": [
+        "elysia",
+        "hono",
+        "transformer",
+        "typescript",
+        "web-framework",
+        "api",
+        "middleware",
+        "type-safe",
+        "route-handler"
+    ]
 }
