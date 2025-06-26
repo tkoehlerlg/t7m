@@ -151,9 +151,8 @@ const propsInstance = new PropsTransformer()
 // Type tests for props
 type test_PropsRequired = Expect<Equal<Parameters<typeof propsInstance.transform>[0], {
     input: User
-    includes?: ('profile' | 'avatar' | 'stats')[]
-    props: TransformProps // Required, not optional
-}>>
+    includes?: ('avatar' | 'profile' | 'stats')[]
+} & { props: TransformProps }>>
 
 // Test: Complex nested transformation
 interface ComplexOutput {
