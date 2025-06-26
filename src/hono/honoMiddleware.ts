@@ -4,7 +4,7 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import type { AbstractTransformer } from '../abstractTransformer'
 import type { HeaderRecord } from './types'
 
-// eslint-disable @typescript-eslint/no-explicit-any
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export const t7mMiddleware = <TEnv extends Env>() =>
     createMiddleware<TEnv>(async (c, next) => {
@@ -35,5 +35,3 @@ export const t7mMiddleware = <TEnv extends Env>() =>
 
         await next()
     })
-
-// eslint-enable @typescript-eslint/no-explicit-any

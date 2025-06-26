@@ -24,6 +24,8 @@ export type JSONRespondReturn<
         'json'
     >
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export interface TransformRespond {
     <
         TInput,
