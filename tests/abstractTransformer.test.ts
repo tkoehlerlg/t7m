@@ -91,11 +91,11 @@ describe('AbstractTransformer', () => {
         },
     ]
 
-    describe('Basic transformation', () => {
+    describe('Basic transformation', async () => {
         const transformer = new BasicUserTransformer()
 
-        it('should transform a single input', () => {
-            const result = transformer.transform({ input: testUser })
+        it('should transform a single input', async () => {
+            const result = await transformer.transform({ input: testUser })
 
             expect(result).toEqual({
                 name: 'John Doe',
@@ -121,8 +121,8 @@ describe('AbstractTransformer', () => {
     describe('Transformation with includes', () => {
         const transformer = new UserTransformerWithIncludes()
 
-        it('should transform without includes', () => {
-            const result = transformer.transform({ input: testUser })
+        it('should transform without includes', async () => {
+            const result = await transformer.transform({ input: testUser })
 
             expect(result).toEqual({
                 name: 'John Doe',
@@ -132,8 +132,8 @@ describe('AbstractTransformer', () => {
             expect(result.metadata).toBeUndefined()
         })
 
-        it('should transform with single include', () => {
-            const result = transformer.transform({
+        it('should transform with single include', async () => {
+            const result = await transformer.transform({
                 input: testUser,
                 includes: ['avatar'],
             })
@@ -146,8 +146,8 @@ describe('AbstractTransformer', () => {
             expect(result.metadata).toBeUndefined()
         })
 
-        it('should transform with multiple includes', () => {
-            const result = transformer.transform({
+        it('should transform with multiple includes', async () => {
+            const result = await transformer.transform({
                 input: testUser,
                 includes: ['avatar', 'metadata'],
             })
@@ -160,8 +160,8 @@ describe('AbstractTransformer', () => {
             })
         })
 
-        it('should transform many with includes', () => {
-            const results = transformer.transformMany({
+        it('should transform many with includes', async () => {
+            const results = await transformer.transformMany({
                 inputs: testUsers,
                 includes: ['avatar'],
             })
@@ -175,8 +175,8 @@ describe('AbstractTransformer', () => {
     describe('Transformation with props', () => {
         const transformer = new UserTransformerWithProps()
 
-        it('should require props', () => {
-            const result = transformer.transform({
+        it('should require props', async () => {
+            const result = await transformer.transform({
                 input: testUser,
                 props: { includeAvatar: true, avatarSize: 100 },
             })
@@ -188,8 +188,8 @@ describe('AbstractTransformer', () => {
             })
         })
 
-        it('should handle props conditionally', () => {
-            const result = transformer.transform({
+        it('should handle props conditionally', async () => {
+            const result = await transformer.transform({
                 input: testUser,
                 props: { includeAvatar: false, avatarSize: 100 },
             })
@@ -201,8 +201,8 @@ describe('AbstractTransformer', () => {
             expect(result.avatar).toBeUndefined()
         })
 
-        it('should pass props to includes', () => {
-            const result = transformer.transform({
+        it('should pass props to includes', async () => {
+            const result = await transformer.transform({
                 input: testUser,
                 props: { includeAvatar: true, avatarSize: 200 },
                 includes: ['metadata'],
@@ -214,8 +214,8 @@ describe('AbstractTransformer', () => {
             })
         })
 
-        it('should transform many with props', () => {
-            const results = transformer.transformMany({
+        it('should transform many with props', async () => {
+            const results = await transformer.transformMany({
                 inputs: testUsers,
                 props: { includeAvatar: true, avatarSize: 50 },
             })
@@ -244,9 +244,9 @@ describe('AbstractTransformer', () => {
     })
 
     describe('Edge cases', () => {
-        it('should handle empty includes array', () => {
+        it('should handle empty includes array', async () => {
             const transformer = new UserTransformerWithIncludes()
-            const result = transformer.transform({
+            const result = await transformer.transform({
                 input: testUser,
                 includes: [],
             })
@@ -257,9 +257,9 @@ describe('AbstractTransformer', () => {
             })
         })
 
-        it('should handle empty inputs array', () => {
+        it('should handle empty inputs array', async () => {
             const transformer = new BasicUserTransformer()
-            const results = transformer.transformMany({ inputs: [] })
+            const results = await transformer.transformMany({ inputs: [] })
 
             expect(results).toEqual([])
         })
