@@ -91,7 +91,9 @@ export abstract class AbstractTransformer<
                         data[include] = await this.includesMap[include](input, props)
                     } catch (error) {
                         // Re-throw the error to maintain the expected behavior
-                        throw new Error(`Error in include function '${String(include)}': ${error instanceof Error ? error.message : String(error)}`)
+                        throw new Error(
+                            `Error in include function '${String(include)}': ${error instanceof Error ? error.message : String(error)}`
+                        )
                     }
                 })
             )
