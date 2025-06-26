@@ -25,6 +25,177 @@ bun add t7m
 
 ## Usage
 
-```typescript
+### Basic Usage
 
+```typescript
+// DB User interface
+interface User {
+    id: number
+    name: string
+    email: string
+}
+
+// Public User
+type PublicUser = Omit<User, 'id'>
+
+class UserTransformer extends AbstractTransformer<User, PublicUser> {
+    protected data(input: User): PublicUser {
+        return {
+            name: input.name,
+            email: input.email,
+        }
+    }
+}
+
+const userTransformer = new UserTransformer()
+
+const user: User = {
+    id: 1,
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+}
+const publicUser: PublicUser = await userTransformer.transform({ input: user }) // (:PublicUser is optional)
+
+console.log(publicUser)
+// Returns: { name: 'John Doe', email: 'john.doe@example.com' }
 ```
+
+### Usage with Includes
+
+```typescript
+import { AbstractTransformer } from 't7m'
+
+// DB User interface
+interface User {
+    id: number
+    name: string
+    email: string
+}
+
+type Post = {
+    id: number
+    title: string
+    content: string
+}
+
+// Public User
+type PublicUser = Omit<User, 'id'> & {
+    posts?: Post[]
+}
+
+class UserTransformer extends AbstractTransformer<User, PublicUser> {
+    protected data(input: User): PublicUser {
+        return {
+            name: input.name,
+            email: input.email,
+        }
+    }
+
+    protected includesMap = {
+        // Transformer can also be nested
+        posts: (input: User) => new PostTransformer().transform({ object: post }),
+        // posts: (input: User) => [{ title: 'Post 1', content: 'Content 1' }],
+    }
+}
+
+const userTransformer = new UserTransformer()
+
+const user: User = {
+    id: 1,
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+}
+const publicUser: PublicUser = await userTransformer.transform({ input: user, includes: ['posts'] }) // (:PublicUser is optional)
+
+console.log(publicUser)
+// Returns: { name: 'John Doe', email: 'john.doe@example.com', posts: [{ title: 'Post 1', content: 'Content 1' }] }
+```
+
+### Usage with Props
+
+You can use props to pass additional data to the transformer, for example a database connection. If you worry about performance on large datasets, I got you covered since all include functions run in parallel!
+
+```typescript
+import { AbstractTransformer } from 't7m'
+
+// DB User interface
+interface User {
+    id: number
+    name: string
+    email: string
+}
+
+// DB Post interface
+type Post = {
+    id: number
+    title: string
+    content: string
+}
+
+// Public Post
+type PublicPost = Omit<Post, 'id'>
+
+// Public User
+type PublicUser = Omit<User, 'id'> & {
+    posts?: PublicPost[]
+}
+
+// Basic Post Transformer
+class PostTransformer extends AbstractTransformer<Post, PublicPost> {
+    protected data(input: Post): PublicPost {
+        return {
+            title: input.title,
+            content: input.content,
+        }
+    }
+}
+
+// User Transformer Props type
+type UserTransformerProps = {
+    db: {
+        posts: Post[]
+    }
+}
+
+class UserTransformer extends AbstractTransformer<User, PublicUser, UserTransformerProps> {
+    protected data(input: User, _props: UserTransformerProps): PublicUser {
+        return {
+            name: input.name,
+            email: input.email,
+        }
+    }
+
+    protected includesMap = {
+        // Transformer can also be nested
+        posts: (input: User, props: UserTransformerProps) =>
+            new PostTransformer().transformMany({ inputs: props.db.posts }),
+        // posts: (input: User) => [{ title: 'Post 1', content: 'Content 1' }],
+    }
+}
+
+// Mock database
+const posts: Post[] = [{ id: 1, title: 'Post 1', content: 'Content 1' }]
+const db = { posts }
+
+// Creating a user transformer instance
+const userTransformer = new UserTransformer()
+
+// Transforming a user
+const user: User = {
+    id: 1,
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+}
+const publicUser: PublicUser = await userTransformer.transform({
+    input: user,
+    includes: ['posts'],
+    props: { db },
+})
+
+console.log(publicUser)
+// Returns: { name: 'John Doe', email: 'john.doe@example.com', posts: [{ title: 'Post 1', content: 'Content 1' }] }
+```
+
+## Performance
+
+I maximized performance by letting all include functions run in parallel. Async requests can simply be made in both include and data functions, as all functions are allowed to be async aswell and run concurrently. Notably, the data function executes before all include functions, allowing you to use its data in your include functions. This is a common pattern when you need to fetch additional data based on the transformed data.
