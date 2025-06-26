@@ -5,6 +5,7 @@ This directory contains comprehensive tests for the `AbstractTransformer` class.
 ## Test Files
 
 ### 1. `abstractTransformer.test.ts` - Core Functionality Tests
+
 - Basic transformation without includes or props
 - Transformation with optional includes
 - Transformation with required/optional props
@@ -12,6 +13,7 @@ This directory contains comprehensive tests for the `AbstractTransformer` class.
 - Type constraint validation
 
 ### 2. `abstractTransformer.type.test.ts` - Type-Level Tests
+
 - Compile-time type safety validation
 - Generic parameter inference
 - Include constraints (only optional properties)
@@ -19,6 +21,7 @@ This directory contains comprehensive tests for the `AbstractTransformer` class.
 - Complex type transformations
 
 ### 3. `abstractTransformer.advanced.test.ts` - Advanced Scenarios
+
 - Complex prop-based transformations
 - Performance testing with large datasets
 - Error handling in include functions
@@ -44,6 +47,7 @@ bun run tsc --noEmit
 ## Test Coverage
 
 The test suite covers:
+
 - ✅ Core transformation logic
 - ✅ Include mechanism for optional properties
 - ✅ Props handling (required/optional)
@@ -56,29 +60,38 @@ The test suite covers:
 ## Key Testing Patterns
 
 ### Basic Transformer
+
 ```typescript
 class BasicTransformer extends AbstractTransformer<Input, Output> {
-    protected data(input: Input): Output { /* ... */ }
+    protected data(input: Input): Output {
+        /* ... */
+    }
     protected override includesMap = {}
 }
 ```
 
 ### Transformer with Includes
+
 ```typescript
 class TransformerWithIncludes extends AbstractTransformer<Input, Output> {
-    protected data(input: Input): Output { /* ... */ }
+    protected data(input: Input): Output {
+        /* ... */
+    }
     protected override includesMap = {
-        optionalProp: (input) => computeValue(input)
+        optionalProp: input => computeValue(input),
     }
 }
 ```
 
 ### Transformer with Props
+
 ```typescript
 class TransformerWithProps extends AbstractTransformer<Input, Output, Props> {
-    protected data(input: Input, props: Props): Output { /* ... */ }
+    protected data(input: Input, props: Props): Output {
+        /* ... */
+    }
     protected override includesMap = {
-        optionalProp: (input, props) => computeWithProps(input, props)
+        optionalProp: (input, props) => computeWithProps(input, props),
     }
 }
 ```
@@ -86,6 +99,7 @@ class TransformerWithProps extends AbstractTransformer<Input, Output, Props> {
 ## Implementation Details
 
 The `AbstractTransformer` class:
+
 - Constrains includes to only optional properties using `OnlyPossiblyUndefined<T>` type
 - Filters invalid includes at runtime
 - Supports both single and batch transformations

@@ -12,7 +12,7 @@ export type HeaderRecord =
 
 export type JSONRespondReturn<
     T extends JSONValue | SimplifyDeepArray<unknown> | InvalidJSONValue,
-    U extends ContentfulStatusCode
+    U extends ContentfulStatusCode,
 > = Response &
     TypedResponse<
         SimplifyDeepArray<T> extends JSONValue
@@ -30,7 +30,7 @@ export interface TransformRespond {
     <
         TInput,
         TOutput extends JSONValue | Record<string, unknown> | InvalidJSONValue,
-        U extends ContentfulStatusCode = ContentfulStatusCode
+        U extends ContentfulStatusCode = ContentfulStatusCode,
     >(
         object: TInput,
         transformer: AbstractTransformer<TInput, TOutput, any, any>,
@@ -43,7 +43,7 @@ export interface TransformManyRespond {
     <
         TInput,
         TOutput extends JSONValue | Record<string, unknown> | InvalidJSONValue,
-        U extends ContentfulStatusCode = ContentfulStatusCode
+        U extends ContentfulStatusCode = ContentfulStatusCode,
     >(
         objects: TInput[],
         transformer: AbstractTransformer<TInput, TOutput, any, any>,

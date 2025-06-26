@@ -6,7 +6,7 @@
         "name": "Torben Koehler & Jona Schwarz"
     },
     "license": "MIT-NSR",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "description": "Transformer for Hono",
     "exports": {
         ".": {

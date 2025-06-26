@@ -1,14 +1,17 @@
 # AbstractTransformer Testing Strategy
 
 ## Overview
+
 This document outlines the comprehensive testing approach for the `AbstractTransformer` class, ensuring both runtime behavior and type safety.
 
 ## Test Structure
 
 ### 1. Runtime Tests (`abstractTransformer.test.ts`)
+
 Located in `/tests/abstractTransformer.test.ts`, these tests verify the actual behavior of the transformer at runtime.
 
 #### Categories:
+
 - **Basic Transformation**: Tests core transform/transformMany functionality without includes or props
 - **Transformation with Includes**: Tests optional property inclusion mechanism
 - **Transformation with Props**: Tests prop-based transformations
@@ -16,9 +19,11 @@ Located in `/tests/abstractTransformer.test.ts`, these tests verify the actual b
 - **Error Scenarios**: Invalid inputs, missing required props
 
 ### 2. Type-Level Tests (`abstractTransformer.type.test.ts`)
+
 Located in `/tests/abstractTransformer.type.test.ts`, these tests ensure type safety at compile time.
 
 #### Type Validations:
+
 - Correct type inference for transform results
 - Proper constraint of includes to optional properties only
 - Required vs optional props handling
@@ -27,6 +32,7 @@ Located in `/tests/abstractTransformer.type.test.ts`, these tests ensure type sa
 ## Key Testing Patterns
 
 ### 1. Basic Transformer Pattern
+
 ```typescript
 class BasicTransformer extends AbstractTransformer<Input, Output> {
     protected data(input: Input): Output {
@@ -35,26 +41,31 @@ class BasicTransformer extends AbstractTransformer<Input, Output> {
     protected override includesMap = {}
 }
 ```
+
 **Tests**: Basic input/output transformation, multiple inputs handling
 
 ### 2. Includes Pattern
+
 ```typescript
 class TransformerWithIncludes extends AbstractTransformer<Input, Output> {
     protected data(input: Input): Output {
         // Base transformation
     }
     protected override includesMap = {
-        optionalProp: (input: Input) => computeValue(input)
+        optionalProp: (input: Input) => computeValue(input),
     }
 }
 ```
-**Tests**: 
+
+**Tests**:
+
 - Transformation without includes (optional props undefined)
 - Single include activation
 - Multiple includes activation
 - Type constraint validation (only optional props allowed)
 
 ### 3. Props Pattern
+
 ```typescript
 class TransformerWithProps extends AbstractTransformer<Input, Output, Props> {
     protected data(input: Input, props: Props): Output {
@@ -62,7 +73,9 @@ class TransformerWithProps extends AbstractTransformer<Input, Output, Props> {
     }
 }
 ```
+
 **Tests**:
+
 - Props are required when specified
 - Props passed to both data() and include functions
 - Props affect transformation logic
@@ -70,45 +83,48 @@ class TransformerWithProps extends AbstractTransformer<Input, Output, Props> {
 ## Test Scenarios
 
 ### Unit Tests
+
 1. **Single Transform**
-   - Valid input → expected output
-   - With/without includes
-   - With/without props
+    - Valid input → expected output
+    - With/without includes
+    - With/without props
 
 2. **Batch Transform (transformMany)**
-   - Empty array handling
-   - Consistent transformation across items
-   - Include/props application to all items
+    - Empty array handling
+    - Consistent transformation across items
+    - Include/props application to all items
 
 3. **Include Mechanism**
-   - Only optional properties can be included
-   - Include functions receive correct parameters
-   - Multiple includes work together
-   - Empty includes array behaves like no includes
+    - Only optional properties can be included
+    - Include functions receive correct parameters
+    - Multiple includes work together
+    - Empty includes array behaves like no includes
 
 4. **Props Handling**
-   - Required when type specifies non-undefined
-   - Optional when type allows undefined
-   - Passed to all transformation functions
+    - Required when type specifies non-undefined
+    - Optional when type allows undefined
+    - Passed to all transformation functions
 
 ### Type Tests
+
 1. **Type Inference**
-   - Output type correctly inferred
-   - Include constraints properly enforced
-   - Props requirements reflected in API
+    - Output type correctly inferred
+    - Include constraints properly enforced
+    - Props requirements reflected in API
 
 2. **Generic Constraints**
-   - `Includes extends keyof OnlyPossiblyUndefined<TOutput>`
-   - Props extends `Record<string, unknown> | undefined`
+    - `Includes extends keyof OnlyPossiblyUndefined<TOutput>`
+    - Props extends `Record<string, unknown> | undefined`
 
 3. **Method Signatures**
-   - transform() parameter types
-   - transformMany() parameter types
-   - Return types match expectations
+    - transform() parameter types
+    - transformMany() parameter types
+    - Return types match expectations
 
 ## Test Data Strategy
 
 ### Simple Test Case
+
 ```typescript
 interface User {
     id: number
@@ -124,6 +140,7 @@ interface PublicUser {
 ```
 
 ### Complex Test Case
+
 ```typescript
 interface Article {
     id: string
@@ -145,6 +162,7 @@ interface PublicArticle {
 ## Running Tests
 
 ### Bun Test Runner
+
 ```bash
 # Run all tests
 bun test
@@ -162,11 +180,13 @@ bun run tsc --noEmit
 ## Coverage Goals
 
 ### Code Coverage
+
 - 100% line coverage for AbstractTransformer class
 - All public methods tested
-- All code paths in _transform method covered
+- All code paths in \_transform method covered
 
 ### Type Coverage
+
 - All generic parameter combinations tested
 - Edge cases for type constraints validated
 - Real-world usage patterns demonstrated

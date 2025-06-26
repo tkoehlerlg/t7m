@@ -56,7 +56,7 @@ class BasicTransformer extends AbstractTransformer<User, PublicUser> {
             email: input.email,
         }
     }
-    
+
     protected override includesMap = {}
 }
 
@@ -65,10 +65,15 @@ const _basicResult = basicInstance.transform({ input: { id: 1, name: 'test', ema
 
 // Type tests for basic transformer
 type test_BasicResult = Expect<Equal<typeof _basicResult, PublicUser>>
-type test_BasicTransformParams = Expect<Equal<Parameters<typeof basicInstance.transform>[0], {
-    input: User
-    includes?: ('avatar' | 'profile' | 'stats')[]
-} & { props?: undefined }>>
+type test_BasicTransformParams = Expect<
+    Equal<
+        Parameters<typeof basicInstance.transform>[0],
+        {
+            input: User
+            includes?: ('avatar' | 'profile' | 'stats')[]
+        } & { props?: undefined }
+    >
+>
 
 // Test: Transformer with optional includes
 class UserTransformerWithIncludes extends AbstractTransformer<User, PublicUser> {
@@ -78,7 +83,7 @@ class UserTransformerWithIncludes extends AbstractTransformer<User, PublicUser> 
             email: input.email,
         }
     }
-    
+
     protected override includesMap = {
         avatar: (input: User) => `https://avatar.com/${input.id}`,
         profile: (input: User) => ({
@@ -95,7 +100,9 @@ class UserTransformerWithIncludes extends AbstractTransformer<User, PublicUser> 
 const includesInstance = new UserTransformerWithIncludes()
 
 // Type tests for includes
-type test_IncludesKeys = Expect<Equal<Parameters<typeof includesInstance.transform>[0]['includes'], ('avatar' | 'profile' | 'stats')[] | undefined>>
+type test_IncludesKeys = Expect<
+    Equal<Parameters<typeof includesInstance.transform>[0]['includes'], ('avatar' | 'profile' | 'stats')[] | undefined>
+>
 
 // Test that non-optional properties cannot be included
 interface StrictUser {
@@ -113,7 +120,7 @@ class StrictTransformer extends AbstractTransformer<User, StrictUser> {
             email: input.email,
         }
     }
-    
+
     protected override includesMap = {
         bio: (input: User) => `Bio for ${input.name}`,
         // The following would cause a type error:
@@ -122,7 +129,9 @@ class StrictTransformer extends AbstractTransformer<User, StrictUser> {
 }
 
 const strictInstance = new StrictTransformer()
-type test_StrictIncludes = Expect<Equal<Parameters<typeof strictInstance.transform>[0]['includes'], ('bio')[] | undefined>>
+type test_StrictIncludes = Expect<
+    Equal<Parameters<typeof strictInstance.transform>[0]['includes'], 'bio'[] | undefined>
+>
 
 // Test: Transformer with required props
 interface TransformProps extends Record<string, unknown> {
@@ -137,7 +146,7 @@ class PropsTransformer extends AbstractTransformer<User, PublicUser, TransformPr
             email: input.email,
         }
     }
-    
+
     protected override includesMap = {
         profile: (input: User, props: TransformProps) => ({
             bio: `User from ${props.locale}`,
@@ -149,10 +158,15 @@ class PropsTransformer extends AbstractTransformer<User, PublicUser, TransformPr
 const propsInstance = new PropsTransformer()
 
 // Type tests for props
-type test_PropsRequired = Expect<Equal<Parameters<typeof propsInstance.transform>[0], {
-    input: User
-    includes?: ('avatar' | 'profile' | 'stats')[]
-} & { props: TransformProps }>>
+type test_PropsRequired = Expect<
+    Equal<
+        Parameters<typeof propsInstance.transform>[0],
+        {
+            input: User
+            includes?: ('avatar' | 'profile' | 'stats')[]
+        } & { props: TransformProps }
+    >
+>
 
 // Test: Complex nested transformation
 interface ComplexOutput {
@@ -177,20 +191,18 @@ class ComplexTransformer extends AbstractTransformer<Article, ComplexOutput, { i
             data: {
                 title: input.title,
                 content: input.content,
-            }
+            },
         }
     }
-    
+
     protected override includesMap = {
         author: (input: Article) => ({
             name: 'Author Name',
             email: 'author@example.com',
         }),
         relatedArticles: (input: Article) => [],
-        analytics: (input: Article, props) => 
-            props.includeAnalytics 
-                ? { views: 100, likes: 10, shares: 5 }
-                : { views: 0, likes: 0, shares: 0 },
+        analytics: (input: Article, props) =>
+            props.includeAnalytics ? { views: 100, likes: 10, shares: 5 } : { views: 0, likes: 0, shares: 0 },
     }
 }
 
@@ -202,8 +214,10 @@ const complexResult = complexInstance.transform({
     includes: ['author', 'analytics'],
 })
 
-type test_ComplexIncludes = Expect<Equal<typeof complexResult['author'], PublicUser | undefined>>
-type test_ComplexAnalytics = Expect<Equal<typeof complexResult['analytics'], { views: number; likes: number; shares: number } | undefined>>
+type test_ComplexIncludes = Expect<Equal<(typeof complexResult)['author'], PublicUser | undefined>>
+type test_ComplexAnalytics = Expect<
+    Equal<(typeof complexResult)['analytics'], { views: number; likes: number; shares: number } | undefined>
+>
 
 // Test: Transform many preserves types
 const manyResults = includesInstance.transformMany({
@@ -224,12 +238,17 @@ class EmptyIncludesTransformer extends AbstractTransformer<User, PublicUser> {
             email: input.email,
         }
     }
-    
+
     protected override includesMap = {} // No includes defined
 }
 
 const emptyIncludesInstance = new EmptyIncludesTransformer()
-type test_EmptyIncludes = Expect<Equal<Parameters<typeof emptyIncludesInstance.transform>[0]['includes'], ('avatar' | 'profile' | 'stats')[] | undefined>>
+type test_EmptyIncludes = Expect<
+    Equal<
+        Parameters<typeof emptyIncludesInstance.transform>[0]['includes'],
+        ('avatar' | 'profile' | 'stats')[] | undefined
+    >
+>
 
 // Export type tests to ensure they're evaluated
 export type TypeTests = {

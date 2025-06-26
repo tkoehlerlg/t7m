@@ -23,7 +23,7 @@ export abstract class AbstractTransformer<
     TInput,
     TOutput,
     Props extends Record<string, unknown> | undefined = undefined,
-    Includes extends keyof OnlyPossiblyUndefined<TOutput> = keyof OnlyPossiblyUndefined<TOutput>
+    Includes extends keyof OnlyPossiblyUndefined<TOutput> = keyof OnlyPossiblyUndefined<TOutput>,
 > {
     /**
      * Abstract method that must be implemented by subclasses to provide the core transformation logic.
