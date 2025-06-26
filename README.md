@@ -1,21 +1,21 @@
-# t7m - Transformer
+# t7m - Transformer 🔄
 
 The ultimate transformer library for Elysia and Hono.
 
-## Core Goals
+## Core Goals 📚
 
 - Simplify output transformation
 - Maximize security
 - Provide maximum flexibility
 - Type safe transformations
 
-## Concept
+## Concept 🧠
 
 ### Why t7m?
 
 ### Where to use t7m?
 
-## Installation
+## Installation 📦
 
 ```bash
 npm install t7m
@@ -23,7 +23,9 @@ npm install t7m
 bun add t7m
 ```
 
-## Usage
+Ready to go! 🚀
+
+## Usage 🧑‍🚀
 
 ### Basic Usage
 
@@ -196,7 +198,7 @@ console.log(publicUser)
 // Returns: { name: 'John Doe', email: 'john.doe@example.com', posts: [{ title: 'Post 1', content: 'Content 1' }] }
 ```
 
-### Hono
+### Hono 🔥
 
 ```typescript
 import { Hono } from 'hono'
@@ -213,17 +215,17 @@ app.get('/users', async c => {
 })
 ```
 
-### Elysia
+### Elysia 🦊
 
 To be developed. (In the next week)
 
-## Performance
+## Performance 🏎️
 
 I maximized performance by letting all include functions run in parallel. Async requests can simply be made in both include and data functions, as all functions are allowed to be async aswell and run concurrently. Notably, the data function executes before all include functions, allowing you to use its data in your include functions. This is a common pattern when you need to fetch additional data based on the transformed data.
 
 Performance can also be increased if transformers are used multiple times by declaring them as a const and reusing them.
 
-## Security
+## Security 🛡️
 
 This package is not only a transformer for easier output transformation, but also a helper to prevent common security issues like exposing sensitive data or database ids. It helps you to prevent these issues by letting u describe how to transform your data and then using it everywhere. The idea is that you ask yourself if you have to transform any data if you shouldn't write a transformer for it so you always use them and thereby prevent forgetting to transform sensitive data right or transforming data differently in different places.
 
