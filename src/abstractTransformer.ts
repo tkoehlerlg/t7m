@@ -54,7 +54,7 @@ export abstract class AbstractTransformer<
     public async transform(
         params: {
             input: TInput
-            includes?: Includes[]
+            includes?: (Includes | string)[]
         } & (Props extends undefined ? { props?: Props } : { props: Props })
     ): Promise<TOutput> {
         const { input, props, includes } = params
@@ -69,7 +69,7 @@ export abstract class AbstractTransformer<
     public async transformMany(
         params: {
             inputs: TInput[]
-            includes?: Includes[]
+            includes?: (Includes | string)[]
         } & (Props extends undefined ? { props?: Props } : { props: Props })
     ): Promise<TOutput[]> {
         const { inputs, props, includes } = params
