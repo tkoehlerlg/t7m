@@ -20,7 +20,7 @@ export const t7mMiddleware = <TEnv extends Env>() =>
             transformer: AbstractTransformer<TInput, TOutput, Props, Includes>,
             extras: {
                 props?: Props
-                includes?: Includes[]
+                includes?: (Includes | string)[]
                 status?: U
                 headers?: HeaderRecord
             }
@@ -30,7 +30,7 @@ export const t7mMiddleware = <TEnv extends Env>() =>
             const transformed = await transformer._transform({
                 input: object,
                 props: props as Props,
-                includes: processedIncludes as Includes[],
+                includes: processedIncludes,
             })
             // @ts-expect-error Hono's json method has complex overloads that don't align with our return type
             return c.json(transformed, status, headers)
@@ -47,7 +47,7 @@ export const t7mMiddleware = <TEnv extends Env>() =>
             transformer: AbstractTransformer<TInput, TOutput, Props, Includes>,
             extras: {
                 props?: Props
-                includes?: Includes[]
+                includes?: (Includes | string)[]
                 status?: U
                 headers?: HeaderRecord
             }
@@ -57,7 +57,7 @@ export const t7mMiddleware = <TEnv extends Env>() =>
             const transformed = await transformer._transformMany({
                 inputs: objects,
                 props: props as Props,
-                includes: processedIncludes as Includes[],
+                includes: processedIncludes,
             })
             return c.json(transformed, status, headers)
         }

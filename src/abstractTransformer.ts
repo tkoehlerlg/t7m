@@ -83,7 +83,11 @@ export abstract class AbstractTransformer<
      * @param params The parameters for the transformation.
      * @returns The transformed output object.
      */
-    public async _transform(params: { input: TInput; props: Props; includes?: Includes[] }): Promise<TOutput> {
+    public async _transform(params: {
+        input: TInput
+        props: Props
+        includes?: (Includes | string)[]
+    }): Promise<TOutput> {
         const { input, props, includes } = params
         return this.__transform(input, props, includes)
     }
@@ -93,7 +97,11 @@ export abstract class AbstractTransformer<
      * @param params The parameters for the transformation.
      * @returns The transformed output objects.
      */
-    public async _transformMany(params: { inputs: TInput[]; props: Props; includes?: Includes[] }): Promise<TOutput[]> {
+    public async _transformMany(params: {
+        inputs: TInput[]
+        props: Props
+        includes?: (Includes | string)[]
+    }): Promise<TOutput[]> {
         const { inputs, props, includes } = params
         return Promise.all(inputs.map(input => this.__transform(input, props, includes)))
     }
@@ -107,14 +115,17 @@ export abstract class AbstractTransformer<
      * @param includes Optional array of includes to transform.
      * @returns The transformed output object.
      */
-    private async __transform(input: TInput, props: Props, includes?: Includes[]): Promise<TOutput> {
+    private async __transform(input: TInput, props: Props, includes?: (Includes | string)[]): Promise<TOutput> {
         const data: TOutput = await this.data(input, props)
-        if (includes && includes.length > 0) {
-            const validIncludes = includes.filter(include => include in this.includesMap)
+        if (includes && includes.length > 0 && typeof data === 'object' && data !== null) {
+            const validIncludes = includes
+                .filter(include => include in this.includesMap)
+                .filter(include => include in Object.keys(data))
+                .map(include => include as Includes)
             await Promise.all(
                 validIncludes.map(async include => {
                     try {
-                        data[include] = await this.includesMap[include](input, props)
+                        ;(data[include] as TOutput[Includes]) = await this.includesMap[include](input, props)
                     } catch (error) {
                         // Re-throw the error to maintain the expected behavior
                         throw new Error(
