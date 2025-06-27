@@ -42,7 +42,7 @@ interface AdvancedProps extends Record<string, unknown> {
 
 // Test transformer with complex logic
 class AdvancedTransformer extends AbstractTransformer<ComplexInput, ComplexOutput, AdvancedProps> {
-    protected data(input: ComplexInput, props: AdvancedProps): ComplexOutput {
+    data(input: ComplexInput, props: AdvancedProps): ComplexOutput {
         const base: ComplexOutput = {
             id: input.id,
             primary: props.format === 'short' ? input.data.primary.substring(0, 10) : input.data.primary,
@@ -55,7 +55,7 @@ class AdvancedTransformer extends AbstractTransformer<ComplexInput, ComplexOutpu
         return base
     }
 
-    protected includesMap = {
+    includesMap = {
         formatted: (input: ComplexInput, props: AdvancedProps) => {
             const date = input.timestamps.created
             return props.format === 'short' ? date.toLocaleDateString() : date.toISOString()
@@ -189,14 +189,14 @@ describe('AbstractTransformer - Advanced Tests', () => {
 
     describe('Include function error handling', () => {
         class ErrorProneTransformer extends AbstractTransformer<ComplexInput, ComplexOutput, AdvancedProps> {
-            protected data(input: ComplexInput, _props: AdvancedProps): ComplexOutput {
+            data(input: ComplexInput, _props: AdvancedProps): ComplexOutput {
                 return {
                     id: input.id,
                     primary: input.data.primary,
                 }
             }
 
-            protected includesMap = {
+            includesMap = {
                 computed: (input: ComplexInput) => {
                     // Intentionally access potentially undefined property
                     return input.data.nested.metadata!.missingKey.value * 2
@@ -264,7 +264,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
                 formatted: 0,
             }
 
-            protected data(input: ComplexInput): ComplexOutput {
+            data(input: ComplexInput): ComplexOutput {
                 this.callCount++
                 return {
                     id: input.id,
@@ -272,7 +272,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
                 }
             }
 
-            protected includesMap = {
+            includesMap = {
                 computed: (input: ComplexInput) => {
                     this.includeCallCounts.computed++
                     return input.data.nested.value * 2
@@ -335,7 +335,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
         }
 
         class DiscriminatedTransformer extends AbstractTransformer<AccountInput, AccountOutput> {
-            protected data(input: AccountInput): AccountOutput {
+            data(input: AccountInput): AccountOutput {
                 const base = {
                     id: input.type === 'user' ? input.userId : input.adminId,
                     name: input.profile.name,
@@ -345,7 +345,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
                 return base as AccountOutput
             }
 
-            protected includesMap = {
+            includesMap = {
                 details: (input: AccountInput) => {
                     if (input.type === 'user') {
                         return {

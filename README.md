@@ -45,7 +45,7 @@ interface User {
 type PublicUser = Omit<User, 'id'>
 
 class UserTransformer extends AbstractTransformer<User, PublicUser> {
-    protected data(input: User): PublicUser {
+    data(input: User): PublicUser {
         return {
             name: input.name,
             email: input.email,
@@ -90,14 +90,14 @@ type PublicUser = Omit<User, 'id'> & {
 }
 
 class UserTransformer extends AbstractTransformer<User, PublicUser> {
-    protected data(input: User): PublicUser {
+    data(input: User): PublicUser {
         return {
             name: input.name,
             email: input.email,
         }
     }
 
-    protected includesMap = {
+    includesMap = {
         // Transformer can also be nested
         posts: (input: User) => new PostTransformer().transform({ object: post }),
         // posts: (input: User) => [{ title: 'Post 1', content: 'Content 1' }],
@@ -148,7 +148,7 @@ type PublicUser = Omit<User, 'id'> & {
 
 // Basic Post Transformer
 class PostTransformer extends AbstractTransformer<Post, PublicPost> {
-    protected data(input: Post): PublicPost {
+    data(input: Post): PublicPost {
         return {
             title: input.title,
             content: input.content,
@@ -164,14 +164,14 @@ type UserTransformerProps = {
 }
 
 class UserTransformer extends AbstractTransformer<User, PublicUser, UserTransformerProps> {
-    protected data(input: User, _props: UserTransformerProps): PublicUser {
+    data(input: User, _props: UserTransformerProps): PublicUser {
         return {
             name: input.name,
             email: input.email,
         }
     }
 
-    protected includesMap = {
+    includesMap = {
         // Transformer can also be nested
         posts: async (input: User, props: UserTransformerProps) =>
             new PostTransformer().transformMany({ inputs: props.db.posts }),

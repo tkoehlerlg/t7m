@@ -50,14 +50,14 @@ interface PublicArticle {
 
 // Test: Basic transformer type inference
 class BasicTransformer extends AbstractTransformer<User, PublicUser> {
-    protected data(input: User): PublicUser {
+    data(input: User): PublicUser {
         return {
             name: input.name,
             email: input.email,
         }
     }
 
-    protected includesMap = {}
+    includesMap = {}
 }
 
 const basicInstance = new BasicTransformer()
@@ -77,14 +77,14 @@ type test_BasicTransformParams = Expect<
 
 // Test: Transformer with optional includes
 class UserTransformerWithIncludes extends AbstractTransformer<User, PublicUser> {
-    protected data(input: User): PublicUser {
+    data(input: User): PublicUser {
         return {
             name: input.name,
             email: input.email,
         }
     }
 
-    protected includesMap = {
+    includesMap = {
         avatar: (input: User) => `https://avatar.com/${input.id}`,
         profile: (input: User) => ({
             bio: `User ${input.name}`,
@@ -113,7 +113,7 @@ interface StrictUser {
 }
 
 class StrictTransformer extends AbstractTransformer<User, StrictUser> {
-    protected data(input: User): StrictUser {
+    data(input: User): StrictUser {
         return {
             id: input.id,
             name: input.name,
@@ -121,7 +121,7 @@ class StrictTransformer extends AbstractTransformer<User, StrictUser> {
         }
     }
 
-    protected includesMap = {
+    includesMap = {
         bio: (input: User) => `Bio for ${input.name}`,
         // The following would cause a type error:
         // name: (input: User) => input.name, // Error: 'name' is not optional
@@ -140,14 +140,14 @@ interface TransformProps extends Record<string, unknown> {
 }
 
 class PropsTransformer extends AbstractTransformer<User, PublicUser, TransformProps> {
-    protected data(input: User, props: TransformProps): PublicUser {
+    data(input: User, props: TransformProps): PublicUser {
         return {
             name: input.name,
             email: input.email,
         }
     }
 
-    protected includesMap = {
+    includesMap = {
         profile: (input: User, props: TransformProps) => ({
             bio: `User from ${props.locale}`,
             location: props.timezone,
@@ -185,7 +185,7 @@ interface ComplexOutput {
 }
 
 class ComplexTransformer extends AbstractTransformer<Article, ComplexOutput, { includeAnalytics: boolean }> {
-    protected data(input: Article, props: { includeAnalytics: boolean }): ComplexOutput {
+    data(input: Article, props: { includeAnalytics: boolean }): ComplexOutput {
         return {
             id: input.id,
             data: {
@@ -195,7 +195,7 @@ class ComplexTransformer extends AbstractTransformer<Article, ComplexOutput, { i
         }
     }
 
-    protected includesMap = {
+    includesMap = {
         author: (input: Article) => ({
             name: 'Author Name',
             email: 'author@example.com',
@@ -232,14 +232,14 @@ type test_TransformManyResult = Expect<Equal<Awaited<typeof manyResults>, Public
 
 // Test: Empty includes behavior
 class EmptyIncludesTransformer extends AbstractTransformer<User, PublicUser> {
-    protected data(input: User): PublicUser {
+    data(input: User): PublicUser {
         return {
             name: input.name,
             email: input.email,
         }
     }
 
-    protected includesMap = {} // No includes defined
+    includesMap = {} // No includes defined
 }
 
 const emptyIncludesInstance = new EmptyIncludesTransformer()

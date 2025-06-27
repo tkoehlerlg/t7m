@@ -25,26 +25,26 @@ interface TransformProps extends Record<string, unknown> {
 
 // Basic transformer without props or includes
 class BasicUserTransformer extends AbstractTransformer<User, PublicUser> {
-    protected data(input: User): PublicUser {
+    data(input: User): PublicUser {
         return {
             name: input.name,
             email: input.email,
         }
     }
 
-    protected includesMap = {}
+    includesMap = {}
 }
 
 // Transformer with optional includes
 class UserTransformerWithIncludes extends AbstractTransformer<User, PublicUser> {
-    protected data(input: User): PublicUser {
+    data(input: User): PublicUser {
         return {
             name: input.name,
             email: input.email,
         }
     }
 
-    protected includesMap = {
+    includesMap = {
         avatar: (input: User) => `https://avatar.com/${input.id}`,
         metadata: (input: User) => ({ role: input.role, id: input.id }),
     }
@@ -52,7 +52,7 @@ class UserTransformerWithIncludes extends AbstractTransformer<User, PublicUser> 
 
 // Transformer with props
 class UserTransformerWithProps extends AbstractTransformer<User, PublicUser, TransformProps> {
-    protected data(input: User, props: TransformProps): PublicUser {
+    data(input: User, props: TransformProps): PublicUser {
         const result: PublicUser = {
             name: input.name,
             email: input.email,
@@ -65,7 +65,7 @@ class UserTransformerWithProps extends AbstractTransformer<User, PublicUser, Tra
         return result
     }
 
-    protected includesMap = {
+    includesMap = {
         metadata: (input: User, props: TransformProps) => ({
             role: input.role,
             avatarSize: props.avatarSize,
