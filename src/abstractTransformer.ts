@@ -120,7 +120,6 @@ export abstract class AbstractTransformer<
         if (includes && includes.length > 0 && typeof data === 'object' && data !== null) {
             const validIncludes = includes
                 .filter(include => include in this.includesMap)
-                .filter(include => include in Object.keys(data))
                 .map(include => include as Includes)
             await Promise.all(
                 validIncludes.map(async include => {
