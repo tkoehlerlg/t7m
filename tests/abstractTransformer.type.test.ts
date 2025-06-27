@@ -70,7 +70,7 @@ type test_BasicTransformParams = Expect<
         Parameters<typeof basicInstance.transform>[0],
         {
             input: User
-            includes?: ('avatar' | 'profile' | 'stats')[]
+            includes?: ('avatar' | 'profile' | 'stats' | string)[]
         } & { props?: undefined }
     >
 >
@@ -101,7 +101,10 @@ const includesInstance = new UserTransformerWithIncludes()
 
 // Type tests for includes
 type test_IncludesKeys = Expect<
-    Equal<Parameters<typeof includesInstance.transform>[0]['includes'], ('avatar' | 'profile' | 'stats')[] | undefined>
+    Equal<
+        Parameters<typeof includesInstance.transform>[0]['includes'],
+        ('avatar' | 'profile' | 'stats' | string)[] | undefined
+    >
 >
 
 // Test that non-optional properties cannot be included
@@ -130,7 +133,7 @@ class StrictTransformer extends AbstractTransformer<User, StrictUser> {
 
 const strictInstance = new StrictTransformer()
 type test_StrictIncludes = Expect<
-    Equal<Parameters<typeof strictInstance.transform>[0]['includes'], 'bio'[] | undefined>
+    Equal<Parameters<typeof strictInstance.transform>[0]['includes'], ('bio' | string)[] | undefined>
 >
 
 // Test: Transformer with required props
@@ -163,7 +166,7 @@ type test_PropsRequired = Expect<
         Parameters<typeof propsInstance.transform>[0],
         {
             input: User
-            includes?: ('avatar' | 'profile' | 'stats')[]
+            includes?: ('avatar' | 'profile' | 'stats' | string)[]
         } & { props: TransformProps }
     >
 >
@@ -246,7 +249,7 @@ const emptyIncludesInstance = new EmptyIncludesTransformer()
 type test_EmptyIncludes = Expect<
     Equal<
         Parameters<typeof emptyIncludesInstance.transform>[0]['includes'],
-        ('avatar' | 'profile' | 'stats')[] | undefined
+        (('avatar' | 'profile' | 'stats') | string)[] | undefined
     >
 >
 
