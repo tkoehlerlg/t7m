@@ -9,7 +9,8 @@ import type { OnlyPossiblyUndefined } from './typeHelper'
  */
 export type IncludeFunction<TInput, TOutput, K extends keyof TOutput, Props> = (
     input: TInput,
-    props: Props
+    props: Props,
+    includes: string[]
 ) => Promise<TOutput[K]> | TOutput[K]
 
 /**
@@ -118,13 +119,18 @@ export abstract class AbstractTransformer<
     private async __transform(input: TInput, props: Props, includes?: (Includes | string)[]): Promise<TOutput> {
         const data: TOutput = await this.data(input, props)
         if (includes && includes.length > 0 && typeof data === 'object' && data !== null) {
+            const otherIncludes = includes.filter(include => !(include in this.includesMap))
             const validIncludes = includes
                 .filter(include => include in this.includesMap)
                 .map(include => include as Includes)
             await Promise.all(
                 validIncludes.map(async include => {
                     try {
-                        ;(data[include] as TOutput[Includes]) = await this.includesMap[include](input, props)
+                        ;(data[include] as TOutput[Includes]) = await this.includesMap[include](
+                            input,
+                            props,
+                            otherIncludes
+                        )
                     } catch (error) {
                         // Re-throw the error to maintain the expected behavior
                         throw new Error(
