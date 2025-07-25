@@ -1,78 +1,78 @@
 {
-    "name": "t7m",
-    "module": "src/index.ts",
-    "type": "module",
-    "author": {
-        "name": "Torben Koehler"
-    },
-    "license": "MIT-NSR",
-    "version": "0.3.0",
-    "description": "Transformer for Elysia and Hono",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/tkoehlerlg/t7m.git"
-    },
-    "bugs": {
-        "url": "https://github.com/tkoehlerlg/t7m/issues"
-    },
-    "homepage": "https://github.com/tkoehlerlg/t7m#readme",
-    "exports": {
-        ".": {
-            "import": "./dist/index.js",
-            "require": "./dist/index.js",
-            "types": "./dist/index.d.ts"
-        },
-        "./hono": {
-            "import": "./dist/hono/index.js",
-            "require": "./dist/hono/index.js",
-            "types": "./dist/hono/index.d.ts"
-        }
-    },
-    "typesVersions": {
-        "*": {
-            "hono": ["./dist/hono/index.d.ts"]
-        }
-    },
-    "types": "dist/index.d.ts",
-    "files": ["dist"],
-    "scripts": {
-        "build": "tsc --declaration --emitDeclarationOnly --outDir dist && NODE_ENV=production bun build src/index.ts src/hono/index.ts --outdir dist --target node --external hono",
-        "dev": "bun --watch src/index.ts",
-        "format": "biome format --write",
-        "lint": "biome lint && biome check",
-        "lint:fix": "biome lint --fix && biome check --fix",
-        "lint:fix:unsafe": "biome lint --fix --unsafe && biome check --fix",
-        "typecheck": "tsc --noEmit",
-        "test": "bun test",
-        "test:coverage": "bun test --coverage --coverage-reporter=lcov --coverage-reporter=text",
-        "prepublishOnly": "bun format && NODE_ENV=production bun run build && bun run test"
-    },
-    "devDependencies": {
-        "@biomejs/biome": "2.1.2",
-        "@types/bun": "latest"
-    },
-    "peerDependencies": {
-        "typescript": "^5",
-        "elysia": "^1.2",
-        "hono": "^4"
-    },
-    "peerDependenciesMeta": {
-        "elysia": {
-            "optional": true
-        },
-        "hono": {
-            "optional": true
-        }
-    },
-    "keywords": [
-        "elysia",
-        "hono",
-        "transformer",
-        "typescript",
-        "web-framework",
-        "api",
-        "middleware",
-        "type-safe",
-        "route-handler"
-    ]
+	"name": "t7m",
+	"module": "src/index.ts",
+	"type": "module",
+	"author": {
+		"name": "Torben Koehler"
+	},
+	"license": "MIT-NSR",
+	"version": "0.3.0",
+	"description": "Transformer for Elysia and Hono",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/tkoehlerlg/t7m.git"
+	},
+	"bugs": {
+		"url": "https://github.com/tkoehlerlg/t7m/issues"
+	},
+	"homepage": "https://github.com/tkoehlerlg/t7m#readme",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"require": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		},
+		"./hono": {
+			"import": "./dist/hono/index.js",
+			"require": "./dist/hono/index.js",
+			"types": "./dist/hono/index.d.ts"
+		}
+	},
+	"typesVersions": {
+		"*": {
+			"hono": ["./dist/hono/index.d.ts"]
+		}
+	},
+	"types": "dist/index.d.ts",
+	"files": ["dist"],
+	"scripts": {
+		"build": "tsc --declaration --emitDeclarationOnly --outDir dist && NODE_ENV=production bun build src/index.ts src/hono/index.ts --outdir dist --target node --external hono",
+		"dev": "bun --watch src/index.ts",
+		"format": "biome format --write",
+		"lint": "biome lint && biome check",
+		"lint:fix": "biome lint --fix && biome check --fix",
+		"lint:fix:unsafe": "biome lint --fix --unsafe && biome check --fix",
+		"typecheck": "tsc --noEmit",
+		"test": "bun test",
+		"test:coverage": "bun test --coverage --coverage-reporter=lcov --coverage-reporter=text",
+		"prepublishOnly": "bun format && NODE_ENV=production bun run build && bun run test"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.1.2",
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5",
+		"elysia": "^1.2",
+		"hono": "^4"
+	},
+	"peerDependenciesMeta": {
+		"elysia": {
+			"optional": true
+		},
+		"hono": {
+			"optional": true
+		}
+	},
+	"keywords": [
+		"elysia",
+		"hono",
+		"transformer",
+		"typescript",
+		"web-framework",
+		"api",
+		"middleware",
+		"type-safe",
+		"route-handler"
+	]
 }

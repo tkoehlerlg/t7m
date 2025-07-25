@@ -3,5 +3,5 @@
  * @template T The type to process.
  */
 export type OnlyPossiblyUndefined<T> = {
-    [P in keyof T as undefined extends T[P] ? P : never]: T[P]
+	[P in keyof T as undefined extends T[P] ? P : never]: T[P]
 }
