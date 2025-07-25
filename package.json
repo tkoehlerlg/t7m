@@ -6,7 +6,7 @@
         "name": "Torben Koehler"
     },
     "license": "MIT-NSR",
-    "version": "0.2.5",
+    "version": "0.3.0",
     "description": "Transformer for Elysia and Hono",
     "repository": {
         "type": "git",
@@ -30,32 +30,26 @@
     },
     "typesVersions": {
         "*": {
-            "hono": [
-                "./dist/hono/index.d.ts"
-            ]
+            "hono": ["./dist/hono/index.d.ts"]
         }
     },
     "types": "dist/index.d.ts",
-    "files": [
-        "dist"
-    ],
+    "files": ["dist"],
     "scripts": {
         "build": "tsc --declaration --emitDeclarationOnly --outDir dist && NODE_ENV=production bun build src/index.ts src/hono/index.ts --outdir dist --target node --external hono",
         "dev": "bun --watch src/index.ts",
-        "format": "prettier --write .",
+        "format": "biome format --write",
+        "lint": "biome lint && biome check",
+        "lint:fix": "biome lint --fix && biome check --fix",
+        "lint:fix:unsafe": "biome lint --fix --unsafe && biome check --fix",
+        "typecheck": "tsc --noEmit",
         "test": "bun test",
         "test:coverage": "bun test --coverage --coverage-reporter=lcov --coverage-reporter=text",
-        "typecheck": "tsc --noEmit",
-        "lint": "eslint src tests",
         "prepublishOnly": "bun format && NODE_ENV=production bun run build && bun run test"
     },
     "devDependencies": {
-        "@types/bun": "latest",
-        "@typescript-eslint/eslint-plugin": "^8.35.0",
-        "@typescript-eslint/parser": "^8.35.0",
-        "eslint": "^9.29.0",
-        "jiti": "^2.4.2",
-        "prettier": "^3.6.1"
+        "@biomejs/biome": "2.1.2",
+        "@types/bun": "latest"
     },
     "peerDependencies": {
         "typescript": "^5",

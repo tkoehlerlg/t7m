@@ -36,84 +36,87 @@ Ready to go! 🚀
 ```typescript
 // DB User interface
 interface User {
-    id: number
-    name: string
-    email: string
+  id: number;
+  name: string;
+  email: string;
 }
 
 // Public User
-type PublicUser = Omit<User, 'id'>
+type PublicUser = Omit<User, "id">;
 
 class UserTransformer extends AbstractTransformer<User, PublicUser> {
-    data(input: User): PublicUser {
-        return {
-            name: input.name,
-            email: input.email,
-        }
-    }
+  data(input: User): PublicUser {
+    return {
+      name: input.name,
+      email: input.email,
+    };
+  }
 }
 
-const userTransformer = new UserTransformer()
+const userTransformer = new UserTransformer();
 
 const user: User = {
-    id: 1,
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-}
-const publicUser: PublicUser = await userTransformer.transform({ input: user }) // (:PublicUser is optional)
+  id: 1,
+  name: "John Doe",
+  email: "john.doe@example.com",
+};
+const publicUser: PublicUser = await userTransformer.transform({ input: user }); // (:PublicUser is optional)
 
-console.log(publicUser)
+console.log(publicUser);
 // Returns: { name: 'John Doe', email: 'john.doe@example.com' }
 ```
 
 ### Usage with Includes
 
 ```typescript
-import { AbstractTransformer } from 't7m'
+import { AbstractTransformer } from "t7m";
 
 // DB User interface
 interface User {
-    id: number
-    name: string
-    email: string
+  id: number;
+  name: string;
+  email: string;
 }
 
 type Post = {
-    id: number
-    title: string
-    content: string
-}
+  id: number;
+  title: string;
+  content: string;
+};
 
 // Public User
-type PublicUser = Omit<User, 'id'> & {
-    posts?: Post[]
-}
+type PublicUser = Omit<User, "id"> & {
+  posts?: Post[];
+};
 
 class UserTransformer extends AbstractTransformer<User, PublicUser> {
-    data(input: User): PublicUser {
-        return {
-            name: input.name,
-            email: input.email,
-        }
-    }
+  data(input: User): PublicUser {
+    return {
+      name: input.name,
+      email: input.email,
+    };
+  }
 
-    includesMap = {
-        // Transformer can also be nested
-        posts: (input: User) => new PostTransformer().transform({ object: post }),
-        // posts: (input: User) => [{ title: 'Post 1', content: 'Content 1' }],
-    }
+  includesMap = {
+    // Transformer can also be nested
+    posts: (input: User) => new PostTransformer().transform({ object: post }),
+    // posts: (input: User) => [{ title: 'Post 1', content: 'Content 1' }],
+  };
 }
 
-const userTransformer = new UserTransformer()
+const userTransformer = new UserTransformer();
 
 const user: User = {
-    id: 1,
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-}
-const publicUser: PublicUser = await userTransformer.transform({ input: user, includes: ['posts'] }) // (:PublicUser is optional)
+  id: 1,
+  name: "John Doe",
+  email: "john.doe@example.com",
+};
+const publicUser: PublicUser = await userTransformer.transform({
+  input: user,
+  includes: ["posts"],
+}); // (:PublicUser is optional)
 
-console.log(publicUser)
+console.log(publicUser);
 // Returns: { name: 'John Doe', email: 'john.doe@example.com', posts: [{ title: 'Post 1', content: 'Content 1' }] }
 ```
 
@@ -122,101 +125,105 @@ console.log(publicUser)
 You can use props to pass additional data to the transformer, for example a database connection. If you worry about performance on large datasets, I got you covered since all include functions run in parallel! Props can also be way more than just database connections with for example a redection parameter you can simply opt in or out for redacting sensitive data.
 
 ```typescript
-import { AbstractTransformer } from 't7m'
+import { AbstractTransformer } from "t7m";
 
 // DB User interface
 interface User {
-    id: number
-    name: string
-    email: string
+  id: number;
+  name: string;
+  email: string;
 }
 
 // DB Post interface
 type Post = {
-    id: number
-    title: string
-    content: string
-}
+  id: number;
+  title: string;
+  content: string;
+};
 
 // Public Post
-type PublicPost = Omit<Post, 'id'>
+type PublicPost = Omit<Post, "id">;
 
 // Public User
-type PublicUser = Omit<User, 'id'> & {
-    posts?: PublicPost[]
-}
+type PublicUser = Omit<User, "id"> & {
+  posts?: PublicPost[];
+};
 
 // Basic Post Transformer
 class PostTransformer extends AbstractTransformer<Post, PublicPost> {
-    data(input: Post): PublicPost {
-        return {
-            title: input.title,
-            content: input.content,
-        }
-    }
+  data(input: Post): PublicPost {
+    return {
+      title: input.title,
+      content: input.content,
+    };
+  }
 }
 
 // User Transformer Props type
 type UserTransformerProps = {
-    db: {
-        posts: Post[]
-    }
-}
+  db: {
+    posts: Post[];
+  };
+};
 
-class UserTransformer extends AbstractTransformer<User, PublicUser, UserTransformerProps> {
-    data(input: User, _props: UserTransformerProps): PublicUser {
-        return {
-            name: input.name,
-            email: input.email,
-        }
-    }
+class UserTransformer extends AbstractTransformer<
+  User,
+  PublicUser,
+  UserTransformerProps
+> {
+  data(input: User, _props: UserTransformerProps): PublicUser {
+    return {
+      name: input.name,
+      email: input.email,
+    };
+  }
 
-    includesMap = {
-        // Transformer can also be nested
-        posts: async (input: User, props: UserTransformerProps) =>
-            new PostTransformer().transformMany({ inputs: props.db.posts }),
-        // posts: (input: User) => [{ title: 'Post 1', content: 'Content 1' }],
-    }
+  includesMap = {
+    // Transformer can also be nested
+    posts: async (input: User, props: UserTransformerProps) =>
+      new PostTransformer().transformMany({ inputs: props.db.posts }),
+    // posts: (input: User) => [{ title: 'Post 1', content: 'Content 1' }],
+  };
 }
 
 // Mock database
-const posts: Post[] = [{ id: 1, title: 'Post 1', content: 'Content 1' }]
-const db = { posts }
+const posts: Post[] = [{ id: 1, title: "Post 1", content: "Content 1" }];
+const db = { posts };
 
 // Creating a user transformer instance
-const userTransformer = new UserTransformer()
+const userTransformer = new UserTransformer();
 
 // Transforming a user
 const user: User = {
-    id: 1,
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-}
+  id: 1,
+  name: "John Doe",
+  email: "john.doe@example.com",
+};
 const publicUser: PublicUser = await userTransformer.transform({
-    input: user,
-    includes: ['posts'],
-    props: { db },
-})
+  input: user,
+  includes: ["posts"],
+  props: { db },
+});
 
-console.log(publicUser)
+console.log(publicUser);
 // Returns: { name: 'John Doe', email: 'john.doe@example.com', posts: [{ title: 'Post 1', content: 'Content 1' }] }
 ```
 
 ### Hono 🔥
 
 ```typescript
-import { Hono } from 'hono'
-import { t7mMiddleware } from 't7m/hono'
+import { Hono } from "hono";
+import { t7mMiddleware } from "t7m/hono";
 
-const app = new Hono()
+const app = new Hono();
 
-app.use(t7mMiddleware())
+app.use(t7mMiddleware());
 
-app.get('/users', async c => {
-    const users = await db.users
-    return c.transformMany(users, new UserTransformer(), { status: 200 }) // status is optional; maps to c.json(transformedUsers, 200)
-    // c.transform for single objects
-})
+app.get("/users", async (c) => {
+  const users = await db.users;
+  return c.transformMany(users, new UserTransformer(), { status: 200 }); // status is optional; maps to c.json(transformedUsers, 200)
+  // c.transform for single objects
+});
 ```
 
 ### Elysia 🦊

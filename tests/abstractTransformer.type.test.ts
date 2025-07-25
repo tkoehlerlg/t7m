@@ -61,7 +61,9 @@ class BasicTransformer extends AbstractTransformer<User, PublicUser> {
 }
 
 const basicInstance = new BasicTransformer()
-const _basicResult = basicInstance.transform({ input: { id: 1, name: 'test', email: 'test@test.com', role: 'user' } })
+const _basicResult = basicInstance.transform({
+    input: { id: 1, name: 'test', email: 'test@test.com', role: 'user' },
+})
 
 // Type tests for basic transformer
 type test_BasicResult = Expect<Equal<typeof _basicResult, Promise<PublicUser>>>

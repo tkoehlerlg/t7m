@@ -63,10 +63,10 @@ The test suite covers:
 
 ```typescript
 class BasicTransformer extends AbstractTransformer<Input, Output> {
-    protected data(input: Input): Output {
-        /* ... */
-    }
-    protected includesMap = {}
+  protected data(input: Input): Output {
+    /* ... */
+  }
+  protected includesMap = {};
 }
 ```
 
@@ -74,12 +74,12 @@ class BasicTransformer extends AbstractTransformer<Input, Output> {
 
 ```typescript
 class TransformerWithIncludes extends AbstractTransformer<Input, Output> {
-    protected data(input: Input): Output {
-        /* ... */
-    }
-    protected includesMap = {
-        optionalProp: input => computeValue(input),
-    }
+  protected data(input: Input): Output {
+    /* ... */
+  }
+  protected includesMap = {
+    optionalProp: (input) => computeValue(input),
+  };
 }
 ```
 
@@ -87,12 +87,12 @@ class TransformerWithIncludes extends AbstractTransformer<Input, Output> {
 
 ```typescript
 class TransformerWithProps extends AbstractTransformer<Input, Output, Props> {
-    protected data(input: Input, props: Props): Output {
-        /* ... */
-    }
-    protected includesMap = {
-        optionalProp: (input, props) => computeWithProps(input, props),
-    }
+  protected data(input: Input, props: Props): Output {
+    /* ... */
+  }
+  protected includesMap = {
+    optionalProp: (input, props) => computeWithProps(input, props),
+  };
 }
 ```
 

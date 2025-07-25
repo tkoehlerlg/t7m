@@ -235,7 +235,10 @@ describe('AbstractTransformer', () => {
             // TypeScript should allow these
             transformer.transform({ input: testUser, includes: ['avatar'] })
             transformer.transform({ input: testUser, includes: ['metadata'] })
-            transformer.transform({ input: testUser, includes: ['avatar', 'metadata'] })
+            transformer.transform({
+                input: testUser,
+                includes: ['avatar', 'metadata'],
+            })
 
             // The type system prevents includes for non-optional properties
             // The type system prevents includes for non-optional properties
