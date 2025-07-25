@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { describe, it, expect } from 'bun:test'
+import { describe, expect, it } from 'bun:test'
 import { AbstractTransformer } from '../src/abstractTransformer'
 
 // Advanced test scenarios for AbstractTransformer
@@ -13,6 +13,7 @@ interface ComplexInput {
         secondary?: string
         nested: {
             value: number
+            // biome-ignore lint/suspicious/noExplicitAny: Just for this test case
             metadata?: Record<string, any>
         }
     }
@@ -30,6 +31,7 @@ interface ComplexOutput {
     enriched?: {
         source: string
         processed: boolean
+        // biome-ignore lint/suspicious/noExplicitAny: Just for this test case
         details?: any
     }
 }
@@ -330,6 +332,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
             accountType: 'user' | 'admin'
             details?: {
                 info: string
+                // biome-ignore lint/suspicious/noExplicitAny: Just for this test case
                 extra?: any
             }
         }

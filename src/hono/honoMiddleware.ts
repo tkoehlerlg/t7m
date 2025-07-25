@@ -2,8 +2,8 @@ import type { Env } from 'hono'
 import { createMiddleware } from 'hono/factory'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import type { AbstractTransformer } from '../abstractTransformer'
-import type { HeaderRecord } from './types'
 import { OnlyPossiblyUndefined } from '../typeHelper'
+import type { HeaderRecord } from './types'
 
 export const t7mMiddleware = <TEnv extends Env>() =>
     createMiddleware<TEnv>(async (c, next) => {

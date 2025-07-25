@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { describe, it, expect } from 'bun:test'
+import { describe, expect, it } from 'bun:test'
 import { AbstractTransformer } from '../src/abstractTransformer'
 
 // Test data types
@@ -15,6 +15,7 @@ interface PublicUser {
     name: string
     email: string
     avatar?: string
+    // biome-ignore lint/suspicious/noExplicitAny: Just for this test case
     metadata?: Record<string, any>
 }
 
