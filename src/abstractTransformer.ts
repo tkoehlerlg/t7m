@@ -55,11 +55,13 @@ export abstract class AbstractTransformer<
 	public async transform(
 		params: {
 			input: TInput
-			includes?: (Includes | string)[]
+			includes?: Includes[]
+			unsafeIncludes?: string[]
 		} & (Props extends undefined ? { props?: Props } : { props: Props })
 	): Promise<TOutput> {
-		const { input, props, includes } = params
-		return this.__transform(input, props as Props, includes)
+		const { input, props, includes, unsafeIncludes } = params
+		const combinedIncludes = [...(includes || []), ...(unsafeIncludes || [])]
+		return this.__transform(input, props as Props, combinedIncludes)
 	}
 
 	/**
@@ -71,10 +73,12 @@ export abstract class AbstractTransformer<
 		params: {
 			inputs: TInput[]
 			includes?: (Includes | string)[]
+			unsafeIncludes?: string[]
 		} & (Props extends undefined ? { props?: Props } : { props: Props })
 	): Promise<TOutput[]> {
-		const { inputs, props, includes } = params
-		return Promise.all(inputs.map(input => this.__transform(input, props as Props, includes)))
+		const { inputs, props, includes, unsafeIncludes } = params
+		const combinedIncludes = [...(includes || []), ...(unsafeIncludes || [])]
+		return Promise.all(inputs.map(input => this.__transform(input, props as Props, combinedIncludes)))
 	}
 
 	// Generic functions
@@ -88,9 +92,11 @@ export abstract class AbstractTransformer<
 		input: TInput
 		props: Props
 		includes?: (Includes | string)[]
+		unsafeIncludes?: string[]
 	}): Promise<TOutput> {
-		const { input, props, includes } = params
-		return this.__transform(input, props, includes)
+		const { input, props, includes, unsafeIncludes } = params
+		const combinedIncludes = [...(includes || []), ...(unsafeIncludes || [])]
+		return this.__transform(input, props, combinedIncludes)
 	}
 
 	/**
@@ -102,9 +108,11 @@ export abstract class AbstractTransformer<
 		inputs: TInput[]
 		props: Props
 		includes?: (Includes | string)[]
+		unsafeIncludes?: string[]
 	}): Promise<TOutput[]> {
-		const { inputs, props, includes } = params
-		return Promise.all(inputs.map(input => this.__transform(input, props, includes)))
+		const { inputs, props, includes, unsafeIncludes } = params
+		const combinedIncludes = [...(includes || []), ...(unsafeIncludes || [])]
+		return Promise.all(inputs.map(input => this.__transform(input, props, combinedIncludes)))
 	}
 
 	// Internal transformation function
