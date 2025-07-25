@@ -35,10 +35,10 @@ Located in `/tests/abstractTransformer.type.test.ts`, these tests ensure type sa
 
 ```typescript
 class BasicTransformer extends AbstractTransformer<Input, Output> {
-    protected data(input: Input): Output {
-        // Transform logic
-    }
-    protected includesMap = {}
+  protected data(input: Input): Output {
+    // Transform logic
+  }
+  protected includesMap = {};
 }
 ```
 
@@ -48,12 +48,12 @@ class BasicTransformer extends AbstractTransformer<Input, Output> {
 
 ```typescript
 class TransformerWithIncludes extends AbstractTransformer<Input, Output> {
-    protected data(input: Input): Output {
-        // Base transformation
-    }
-    protected includesMap = {
-        optionalProp: (input: Input) => computeValue(input),
-    }
+  protected data(input: Input): Output {
+    // Base transformation
+  }
+  protected includesMap = {
+    optionalProp: (input: Input) => computeValue(input),
+  };
 }
 ```
 
@@ -68,9 +68,9 @@ class TransformerWithIncludes extends AbstractTransformer<Input, Output> {
 
 ```typescript
 class TransformerWithProps extends AbstractTransformer<Input, Output, Props> {
-    protected data(input: Input, props: Props): Output {
-        // Use props in transformation
-    }
+  protected data(input: Input, props: Props): Output {
+    // Use props in transformation
+  }
 }
 ```
 
@@ -85,41 +85,41 @@ class TransformerWithProps extends AbstractTransformer<Input, Output, Props> {
 ### Unit Tests
 
 1. **Single Transform**
-    - Valid input → expected output
-    - With/without includes
-    - With/without props
+   - Valid input → expected output
+   - With/without includes
+   - With/without props
 
 2. **Batch Transform (transformMany)**
-    - Empty array handling
-    - Consistent transformation across items
-    - Include/props application to all items
+   - Empty array handling
+   - Consistent transformation across items
+   - Include/props application to all items
 
 3. **Include Mechanism**
-    - Only optional properties can be included
-    - Include functions receive correct parameters
-    - Multiple includes work together
-    - Empty includes array behaves like no includes
+   - Only optional properties can be included
+   - Include functions receive correct parameters
+   - Multiple includes work together
+   - Empty includes array behaves like no includes
 
 4. **Props Handling**
-    - Required when type specifies non-undefined
-    - Optional when type allows undefined
-    - Passed to all transformation functions
+   - Required when type specifies non-undefined
+   - Optional when type allows undefined
+   - Passed to all transformation functions
 
 ### Type Tests
 
 1. **Type Inference**
-    - Output type correctly inferred
-    - Include constraints properly enforced
-    - Props requirements reflected in API
+   - Output type correctly inferred
+   - Include constraints properly enforced
+   - Props requirements reflected in API
 
 2. **Generic Constraints**
-    - `Includes extends keyof OnlyPossiblyUndefined<TOutput>`
-    - Props extends `Record<string, unknown> | undefined`
+   - `Includes extends keyof OnlyPossiblyUndefined<TOutput>`
+   - Props extends `Record<string, unknown> | undefined`
 
 3. **Method Signatures**
-    - transform() parameter types
-    - transformMany() parameter types
-    - Return types match expectations
+   - transform() parameter types
+   - transformMany() parameter types
+   - Return types match expectations
 
 ## Test Data Strategy
 
@@ -127,15 +127,15 @@ class TransformerWithProps extends AbstractTransformer<Input, Output, Props> {
 
 ```typescript
 interface User {
-    id: number
-    name: string
-    email: string
+  id: number;
+  name: string;
+  email: string;
 }
 
 interface PublicUser {
-    name: string
-    email: string
-    avatar?: string
+  name: string;
+  email: string;
+  avatar?: string;
 }
 ```
 
@@ -143,19 +143,19 @@ interface PublicUser {
 
 ```typescript
 interface Article {
-    id: string
-    title: string
-    content: string
-    author: User
-    metadata: Record<string, any>
+  id: string;
+  title: string;
+  content: string;
+  author: User;
+  metadata: Record<string, any>;
 }
 
 interface PublicArticle {
-    title: string
-    excerpt: string
-    author?: PublicUser
-    relatedArticles?: PublicArticle[]
-    analytics?: AnalyticsData
+  title: string;
+  excerpt: string;
+  author?: PublicUser;
+  relatedArticles?: PublicArticle[];
+  analytics?: AnalyticsData;
 }
 ```
 

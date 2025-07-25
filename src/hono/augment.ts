@@ -1,8 +1,8 @@
-import type { TransformRespond, TransformManyRespond } from './types'
+import type { TransformManyRespond, TransformRespond } from './types'
 
 declare module 'hono' {
-    interface Context {
-        transform: TransformRespond
-        transformMany: TransformManyRespond
-    }
+	interface Context {
+		transform: TransformRespond
+		transformMany: TransformManyRespond
+	}
 }
