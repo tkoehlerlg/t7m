@@ -32,7 +32,7 @@ export abstract class AbstractTransformer<
 	 * @param props Optional props object for additional parameters.
 	 * @returns The transformed output object.
 	 */
-	protected abstract data(input: TInput, props: Props): TOutput
+	protected abstract data(input: TInput, props: Props): TOutput | Promise<TOutput>
 
 	/**
 	 * Map of include functions for each possible include.
