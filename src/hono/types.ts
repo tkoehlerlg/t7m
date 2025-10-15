@@ -3,8 +3,7 @@ import type { ResponseHeader } from 'hono/utils/headers'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import type { BaseMime } from 'hono/utils/mime'
 import type { InvalidJSONValue, JSONParsed, JSONValue, SimplifyDeepArray } from 'hono/utils/types'
-import type { AbstractTransformer } from '../abstractTransformer'
-import { OnlyPossiblyUndefined } from '../typeHelper'
+import { AnyAbstractTransformer, IncludesOf, InputOf, OutputOf, PropsOf } from '../typeHelper'
 
 export type HeaderRecord =
 	| Record<'Content-Type', BaseMime>
@@ -26,39 +25,27 @@ export type JSONRespondReturn<
 	>
 
 export interface TransformRespond {
-	<
-		TInput,
-		TOutput extends JSONValue | Record<string, unknown> | InvalidJSONValue,
-		Props extends Record<string, unknown> | undefined,
-		Includes extends keyof OnlyPossiblyUndefined<TOutput> = keyof OnlyPossiblyUndefined<TOutput>,
-		U extends ContentfulStatusCode = ContentfulStatusCode,
-	>(
-		object: TInput,
-		transformer: AbstractTransformer<TInput, TOutput, Props, Includes>,
+	<T extends AnyAbstractTransformer>(
+		object: InputOf<T>,
+		transformer: T,
 		extras: {
-			props?: Props
-			includes?: Includes[]
-			status?: U
-			headers?: HeaderRecord
-		}
-	): Promise<JSONRespondReturn<TOutput, U>>
+			includes?: IncludesOf<T>[]
+			wrapper?: (data: OutputOf<T>) => object
+		} & (PropsOf<T> extends undefined ? { props: never } : { props: PropsOf<T> }),
+		status?: ContentfulStatusCode,
+		headers?: HeaderRecord
+	): Promise<JSONRespondReturn<OutputOf<T>, ContentfulStatusCode>>
 }
 
 export interface TransformManyRespond {
-	<
-		TInput,
-		TOutput extends JSONValue | Record<string, unknown> | InvalidJSONValue,
-		Props extends Record<string, unknown> | undefined,
-		Includes extends keyof OnlyPossiblyUndefined<TOutput> = keyof OnlyPossiblyUndefined<TOutput>,
-		U extends ContentfulStatusCode = ContentfulStatusCode,
-	>(
-		objects: TInput[],
-		transformer: AbstractTransformer<TInput, TOutput, Props, Includes>,
+	<T extends AnyAbstractTransformer>(
+		objects: InputOf<T>[],
+		transformer: T,
 		extras: {
-			props?: Props
-			includes?: Includes[]
-			status?: U
-			headers?: HeaderRecord
-		}
-	): Promise<JSONRespondReturn<TOutput[], U>>
+			includes?: IncludesOf<T>[]
+			wrapper?: (data: OutputOf<T>[]) => object
+		} & (PropsOf<T> extends undefined ? { props: never } : { props: PropsOf<T> }),
+		status?: ContentfulStatusCode,
+		headers?: HeaderRecord
+	): Promise<JSONRespondReturn<OutputOf<T>[], ContentfulStatusCode>>
 }

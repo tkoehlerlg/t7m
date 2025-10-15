@@ -1,4 +1,4 @@
-import type { OnlyPossiblyUndefined } from './typeHelper'
+import type { OnlyPossiblyUndefined } from './types'
 
 /**
  * Include function type.
@@ -57,7 +57,7 @@ export abstract class AbstractTransformer<
 			input: TInput
 			includes?: Includes[]
 			unsafeIncludes?: string[]
-		} & (Props extends undefined ? { props?: Props } : { props: Props })
+		} & (Props extends undefined ? { props?: never } : { props: Props })
 	): Promise<TOutput> {
 		const { input, props, includes, unsafeIncludes } = params
 		const combinedIncludes = [...(includes || []), ...(unsafeIncludes || [])]
@@ -74,7 +74,7 @@ export abstract class AbstractTransformer<
 			inputs: TInput[]
 			includes?: Includes[]
 			unsafeIncludes?: string[]
-		} & (Props extends undefined ? { props?: Props } : { props: Props })
+		} & (Props extends undefined ? { props?: never } : { props: Props })
 	): Promise<TOutput[]> {
 		const { inputs, props, includes, unsafeIncludes } = params
 		const combinedIncludes = [...(includes || []), ...(unsafeIncludes || [])]

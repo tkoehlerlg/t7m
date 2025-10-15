@@ -1,65 +1,54 @@
 import type { Env } from 'hono'
 import { createMiddleware } from 'hono/factory'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
-import type { AbstractTransformer } from '../abstractTransformer'
-import { OnlyPossiblyUndefined } from '../typeHelper'
+import { AnyAbstractTransformer, IncludesOf, InputOf, OutputOf, PropsOf } from '../typeHelper'
 import type { HeaderRecord } from './types'
 
 export const t7mMiddleware = <TEnv extends Env>() =>
 	createMiddleware<TEnv>(async (c, next) => {
 		const { include } = c.req.query()
 
-		c.transform = async function <
-			TInput,
-			TOutput,
-			Props extends Record<string, unknown> | undefined,
-			Includes extends keyof OnlyPossiblyUndefined<TOutput> = keyof OnlyPossiblyUndefined<TOutput>,
-			U extends ContentfulStatusCode = ContentfulStatusCode,
-		>(
-			object: TInput,
-			transformer: AbstractTransformer<TInput, TOutput, Props, Includes>,
+		c.transform = async function <T extends AnyAbstractTransformer>(
+			input: InputOf<T>,
+			transformer: T,
 			extras: {
-				props?: Props
-				includes?: (Includes | string)[]
-				status?: U
-				headers?: HeaderRecord
-			}
+				includes?: IncludesOf<T>[]
+				wrapper?: (data: OutputOf<T>) => object
+			} & (PropsOf<T> extends undefined ? { props: never } : { props: PropsOf<T> }),
+			status?: ContentfulStatusCode,
+			headers?: HeaderRecord
 		) {
-			const { props, includes, status, headers } = extras
+			const { props, includes, wrapper } = extras
 			const processedIncludes = includes || include?.split(',')
 			const transformed = await transformer._transform({
-				input: object,
-				props: props as Props,
+				input,
+				props,
 				unsafeIncludes: processedIncludes,
 			})
+			const response = wrapper ? wrapper(transformed) : transformed
 			// @ts-expect-error Hono's json method has complex overloads that don't align with our return type
-			return c.json(transformed, status, headers)
+			return c.json(response, status, headers)
 		}
 
-		c.transformMany = async function <
-			TInput,
-			TOutput,
-			Props extends Record<string, unknown> | undefined,
-			Includes extends keyof OnlyPossiblyUndefined<TOutput> = keyof OnlyPossiblyUndefined<TOutput>,
-			U extends ContentfulStatusCode = ContentfulStatusCode,
-		>(
-			objects: TInput[],
-			transformer: AbstractTransformer<TInput, TOutput, Props, Includes>,
+		c.transformMany = async function <T extends AnyAbstractTransformer>(
+			inputs: InputOf<T>[],
+			transformer: T,
 			extras: {
-				props?: Props
-				includes?: (Includes | string)[]
-				status?: U
-				headers?: HeaderRecord
-			}
+				includes?: IncludesOf<T>[]
+				wrapper?: (data: OutputOf<T>[]) => object
+			} & (PropsOf<T> extends undefined ? { props: never } : { props: PropsOf<T> }),
+			status?: ContentfulStatusCode,
+			headers?: HeaderRecord
 		) {
-			const { props, includes, status, headers } = extras
+			const { props, includes, wrapper } = extras
 			const processedIncludes = includes || include?.split(',')
 			const transformed = await transformer._transformMany({
-				inputs: objects,
-				props: props as Props,
+				inputs,
+				props,
 				unsafeIncludes: processedIncludes,
 			})
-			return c.json(transformed, status, headers)
+			const response = wrapper ? wrapper(transformed) : transformed
+			return c.json(response, status, headers)
 		}
 
 		await next()

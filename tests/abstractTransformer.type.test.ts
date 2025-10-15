@@ -1,7 +1,7 @@
 // Type-level tests for AbstractTransformer
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { AbstractTransformer } from '../src/abstractTransformer'
+import { AbstractTransformer, IncludesOf, InputOf, OutputOf, PropsOf } from '../src'
 
 // Helper type for testing type equality
 type Expect<T extends true> = T
@@ -67,15 +67,10 @@ const _basicResult = basicInstance.transform({
 
 // Type tests for basic transformer
 type test_BasicResult = Expect<Equal<typeof _basicResult, Promise<PublicUser>>>
-type test_BasicTransformParams = Expect<
-	Equal<
-		Parameters<typeof basicInstance.transform>[0],
-		{
-			input: User
-			includes?: ('avatar' | 'profile' | 'stats' | string)[]
-		} & { props?: undefined }
-	>
->
+type test_BasicTransformParams = Expect<Equal<InputOf<typeof basicInstance>, User>>
+type test_BasicTransformIncludes = Expect<Equal<IncludesOf<typeof basicInstance>, never>>
+type test_BasicTransformProps = Expect<Equal<PropsOf<typeof basicInstance>, undefined>>
+type test_BasicTransformOutput = Expect<Equal<OutputOf<typeof basicInstance>, PublicUser>>
 
 // Test: Transformer with optional includes
 class UserTransformerWithIncludes extends AbstractTransformer<User, PublicUser> {
@@ -102,12 +97,7 @@ class UserTransformerWithIncludes extends AbstractTransformer<User, PublicUser> 
 const includesInstance = new UserTransformerWithIncludes()
 
 // Type tests for includes
-type test_IncludesKeys = Expect<
-	Equal<
-		Parameters<typeof includesInstance.transform>[0]['includes'],
-		('avatar' | 'profile' | 'stats' | string)[] | undefined
-	>
->
+type test_IncludesKeys = Expect<Equal<IncludesOf<typeof includesInstance>, 'avatar' | 'profile' | 'stats'>>
 
 // Test that non-optional properties cannot be included
 interface StrictUser {
@@ -134,9 +124,7 @@ class StrictTransformer extends AbstractTransformer<User, StrictUser> {
 }
 
 const strictInstance = new StrictTransformer()
-type test_StrictIncludes = Expect<
-	Equal<Parameters<typeof strictInstance.transform>[0]['includes'], ('bio' | string)[] | undefined>
->
+type test_StrictIncludes = Expect<Equal<IncludesOf<typeof strictInstance>, 'bio'>>
 
 // Test: Transformer with required props
 interface TransformProps extends Record<string, unknown> {
@@ -163,15 +151,9 @@ class PropsTransformer extends AbstractTransformer<User, PublicUser, TransformPr
 const propsInstance = new PropsTransformer()
 
 // Type tests for props
-type test_PropsRequired = Expect<
-	Equal<
-		Parameters<typeof propsInstance.transform>[0],
-		{
-			input: User
-			includes?: ('avatar' | 'profile' | 'stats' | string)[]
-		} & { props: TransformProps }
-	>
->
+type test_PropsRequired = Expect<Equal<PropsOf<typeof propsInstance>, TransformProps>>
+// @ts-expect-error This should fail because props are required
+type test_RejectOptionalProps = Expect<Equal<PropsOf<typeof propsInstance>, undefined>>
 
 // Test: Complex nested transformation
 interface ComplexOutput {
@@ -248,20 +230,19 @@ class EmptyIncludesTransformer extends AbstractTransformer<User, PublicUser> {
 }
 
 const emptyIncludesInstance = new EmptyIncludesTransformer()
-type test_EmptyIncludes = Expect<
-	Equal<
-		Parameters<typeof emptyIncludesInstance.transform>[0]['includes'],
-		(('avatar' | 'profile' | 'stats') | string)[] | undefined
-	>
->
+type test_EmptyIncludes = Expect<Equal<IncludesOf<typeof emptyIncludesInstance>, never>>
 
 // Export type tests to ensure they're evaluated
 export type TypeTests = {
 	basicResult: test_BasicResult
 	basicTransformParams: test_BasicTransformParams
+	basicTransformIncludes: test_BasicTransformIncludes
+	basicTransformProps: test_BasicTransformProps
+	basicTransformOutput: test_BasicTransformOutput
 	includesKeys: test_IncludesKeys
 	strictIncludes: test_StrictIncludes
 	propsRequired: test_PropsRequired
+	rejectOptionalProps: test_RejectOptionalProps
 	complexIncludes: test_ComplexIncludes
 	complexAnalytics: test_ComplexAnalytics
 	transformManyResult: test_TransformManyResult
