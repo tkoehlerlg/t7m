@@ -145,7 +145,7 @@ export abstract class AbstractTransformer<
 					} catch (error) {
 						// Re-throw the error to maintain the expected behavior
 						throw new Error(
-							`Error in include function '${String(include)}': ${error instanceof Error ? error.message : String(error)}`
+							`[T7M] Error in include function '${String(include)}': ${error instanceof Error ? error.message : String(error)}`
 						)
 					}
 				})
