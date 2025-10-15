@@ -4,6 +4,18 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import { AnyAbstractTransformer, IncludesOf, InputOf, OutputOf, PropsOf } from '../typeHelper'
 import type { HeaderRecord } from './types'
 
+const T7M_PREFIX = '\x1b[36m[T7M]\x1b[0m'
+
+const log = (message: string, data?: unknown, transformerName?: string) => {
+	const nameTag = transformerName ? `\x1b[33m[T7M - ${transformerName}]\x1b[0m` : ''
+	if (data !== undefined) {
+		const jsonData = typeof data === 'string' ? data : JSON.stringify(data, null, 2).substring(0, 300)
+		console.log(T7M_PREFIX, nameTag, message, jsonData)
+	} else {
+		console.log(T7M_PREFIX, nameTag, message)
+	}
+}
+
 export const t7mMiddleware = <TEnv extends Env>() =>
 	createMiddleware<TEnv>(async (c, next) => {
 		const { include } = c.req.query()
@@ -20,19 +32,17 @@ export const t7mMiddleware = <TEnv extends Env>() =>
 			headers?: HeaderRecord
 		) {
 			const { props, includes, wrapper, debug } = extras
-			if (debug) console.log('[T7M] Transforming (One): \n', JSON.stringify(input, null, 2).substring(0, 300))
+			if (debug) log('Transforming (One):\n', input, transformer.constructor.name)
 			const processedIncludes = includes || include?.split(',')
-			if (debug && processedIncludes) console.log('[T7M] Includes Received:', processedIncludes)
+			if (debug && processedIncludes) log('Includes Received:', processedIncludes, transformer.constructor.name)
 			const transformed = await transformer._transform({
 				input,
 				props,
 				unsafeIncludes: processedIncludes,
 			})
-			if (debug)
-				console.log('[T7M] Transformed (One) ✅: \n', JSON.stringify(transformed, null, 2).substring(0, 300))
+			if (debug) log('Transformed (One) ✅:\n', transformed, transformer.constructor.name)
 			const response = wrapper ? wrapper(transformed) : transformed
-			if (debug && wrapper)
-				console.log('[T7M] Response (One, Wrapped) ✅: \n', JSON.stringify(response, null, 2).substring(0, 300))
+			if (debug && wrapper) log('Response (One, Wrapped) ✅:\n', response, transformer.constructor.name)
 			// @ts-expect-error Hono's json method has complex overloads that don't align with our return type
 			return c.json(response, status, headers)
 		}
@@ -49,22 +59,17 @@ export const t7mMiddleware = <TEnv extends Env>() =>
 			headers?: HeaderRecord
 		) {
 			const { props, includes, wrapper, debug } = extras
-			if (debug) console.log('[T7M] Transforming many: \n', JSON.stringify(inputs, null, 2).substring(0, 300))
+			if (debug) log('Transforming (Many):\n', inputs, transformer.constructor.name)
 			const processedIncludes = includes || include?.split(',')
-			if (debug && processedIncludes) console.log('[T7M] Includes Received:', processedIncludes)
+			if (debug && processedIncludes) log('Includes Received:', processedIncludes, transformer.constructor.name)
 			const transformed = await transformer._transformMany({
 				inputs,
 				props,
 				unsafeIncludes: processedIncludes,
 			})
-			if (debug)
-				console.log('[T7M] Transformed (Many) ✅: \n', JSON.stringify(transformed, null, 2).substring(0, 300))
+			if (debug) log('Transformed (Many) ✅:\n', transformed, transformer.constructor.name)
 			const response = wrapper ? wrapper(transformed) : transformed
-			if (debug && wrapper)
-				console.log(
-					'[T7M] Response (Many, Wrapped) ✅: \n',
-					JSON.stringify(response, null, 2).substring(0, 300)
-				)
+			if (debug && wrapper) log('Response (Many, Wrapped) ✅:\n', response, transformer.constructor.name)
 			return c.json(response, status, headers)
 		}
 
