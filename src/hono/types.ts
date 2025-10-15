@@ -31,6 +31,7 @@ export interface TransformRespond {
 		extras: {
 			includes?: IncludesOf<T>[]
 			wrapper?: (data: OutputOf<T>) => object
+			debug?: boolean
 		} & (PropsOf<T> extends undefined ? { props: never } : { props: PropsOf<T> }),
 		status?: ContentfulStatusCode,
 		headers?: HeaderRecord
@@ -44,6 +45,7 @@ export interface TransformManyRespond {
 		extras: {
 			includes?: IncludesOf<T>[]
 			wrapper?: (data: OutputOf<T>[]) => object
+			debug?: boolean
 		} & (PropsOf<T> extends undefined ? { props: never } : { props: PropsOf<T> }),
 		status?: ContentfulStatusCode,
 		headers?: HeaderRecord
