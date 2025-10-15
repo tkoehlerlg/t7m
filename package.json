@@ -6,7 +6,7 @@
 		"name": "Torben Koehler"
 	},
 	"license": "MIT-NSR",
-	"version": "0.3.2",
+	"version": "0.4.0",
 	"description": "Transformer for Elysia and Hono",
 	"repository": {
 		"type": "git",
