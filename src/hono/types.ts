@@ -25,29 +25,37 @@ export type JSONRespondReturn<
 	>
 
 export interface TransformRespond {
-	<T extends AnyAbstractTransformer>(
+	<
+		T extends AnyAbstractTransformer,
+		O extends { data: OutputOf<T> } | OutputOf<T> = OutputOf<T>,
+		U extends ContentfulStatusCode = ContentfulStatusCode,
+	>(
 		input: InputOf<T>,
 		transformer: T,
 		extras: {
 			includes?: IncludesOf<T>[]
-			wrapper?: (data: OutputOf<T>) => object
+			wrapper?: (data: OutputOf<T>) => O
 			debug?: boolean
-		} & (PropsOf<T> extends undefined ? { props: never } : { props: PropsOf<T> }),
-		status?: ContentfulStatusCode,
+		} & (PropsOf<T> extends undefined ? { props?: never } : { props: PropsOf<T> }),
+		status?: U,
 		headers?: HeaderRecord
-	): Promise<JSONRespondReturn<OutputOf<T>, ContentfulStatusCode>>
+	): Promise<JSONRespondReturn<O, U>>
 }
 
 export interface TransformManyRespond {
-	<T extends AnyAbstractTransformer>(
+	<
+		T extends AnyAbstractTransformer,
+		O extends { data: OutputOf<T>[] } | OutputOf<T>[] = OutputOf<T>[],
+		U extends ContentfulStatusCode = ContentfulStatusCode,
+	>(
 		inputs: InputOf<T>[],
 		transformer: T,
 		extras: {
 			includes?: IncludesOf<T>[]
-			wrapper?: (data: OutputOf<T>[]) => object
+			wrapper?: (data: OutputOf<T>[]) => O
 			debug?: boolean
-		} & (PropsOf<T> extends undefined ? { props: never } : { props: PropsOf<T> }),
-		status?: ContentfulStatusCode,
+		} & (PropsOf<T> extends undefined ? { props?: never } : { props: PropsOf<T> }),
+		status?: U,
 		headers?: HeaderRecord
-	): Promise<JSONRespondReturn<OutputOf<T>[], ContentfulStatusCode>>
+	): Promise<JSONRespondReturn<O, U>>
 }
