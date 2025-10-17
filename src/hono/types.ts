@@ -26,7 +26,7 @@ export type JSONRespondReturn<
 
 export interface TransformRespond {
 	<T extends AnyAbstractTransformer>(
-		object: InputOf<T>,
+		input: InputOf<T>,
 		transformer: T,
 		extras: {
 			includes?: IncludesOf<T>[]
@@ -40,7 +40,7 @@ export interface TransformRespond {
 
 export interface TransformManyRespond {
 	<T extends AnyAbstractTransformer>(
-		objects: InputOf<T>[],
+		inputs: InputOf<T>[],
 		transformer: T,
 		extras: {
 			includes?: IncludesOf<T>[]
