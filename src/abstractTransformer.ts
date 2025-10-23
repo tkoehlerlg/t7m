@@ -39,11 +39,9 @@ export abstract class AbstractTransformer<
 	 * @template K The key of the output object to include.
 	 * @template Props The type of the props object.
 	 */
-	protected readonly includesMap: {
+	protected readonly includesMap: Partial<{
 		[K in Includes]: IncludeFunction<TInput, TOutput, K, Props>
-	} = Object.create(null) as {
-		[K in Includes]: IncludeFunction<TInput, TOutput, K, Props>
-	}
+	}> = {}
 
 	// Transform functions
 
@@ -136,6 +134,7 @@ export abstract class AbstractTransformer<
 				.map(include => include as Includes)
 			await Promise.all(
 				validIncludes.map(async include => {
+					if (!this.includesMap[include]) throw new Error(`Include function not found in includesMap`)
 					try {
 						;(data[include] as TOutput[Includes]) = await this.includesMap[include](
 							input,
