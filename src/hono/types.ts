@@ -2,7 +2,7 @@ import { TypedResponse } from 'hono'
 import type { ResponseHeader } from 'hono/utils/headers'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import type { BaseMime } from 'hono/utils/mime'
-import type { InvalidJSONValue, JSONParsed, JSONValue, SimplifyDeepArray } from 'hono/utils/types'
+import type { InvalidJSONValue, JSONParsed, SimplifyDeepArray } from 'hono/utils/types'
 import { AnyAbstractTransformer, IncludesOf, InputOf, OutputOf, PropsOf } from '../typeHelper'
 
 export type HeaderRecord =
@@ -10,16 +10,11 @@ export type HeaderRecord =
 	| Record<ResponseHeader, string | string[]>
 	| Record<string, string | string[]>
 
-export type JSONRespondReturn<
-	T extends JSONValue | SimplifyDeepArray<unknown> | InvalidJSONValue,
-	U extends ContentfulStatusCode,
-> = Response &
+export type JSONRespondReturn<T, U extends ContentfulStatusCode> = Response &
 	TypedResponse<
-		SimplifyDeepArray<T> extends JSONValue
-			? JSONValue extends SimplifyDeepArray<T>
-				? never
-				: JSONParsed<T>
-			: never,
+		SimplifyDeepArray<T> extends InvalidJSONValue
+			? never
+			: JSONParsed<T>,
 		U,
 		'json'
 	>
