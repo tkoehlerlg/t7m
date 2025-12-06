@@ -41,5 +41,16 @@
 	"assist": {
 		"enabled": true,
 		"actions": { "source": { "organizeImports": "on" } }
-	}
+	},
+	"overrides": [
+		{
+			"includes": ["dist/**/*"],
+			"formatter": {
+				"enabled": false
+			},
+			"linter": {
+				"enabled": false
+			}
+		}
+	]
 }
