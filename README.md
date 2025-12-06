@@ -298,6 +298,161 @@ Include functions that throw errors are wrapped with descriptive error messages:
 - Original error message preserved
 - Stack trace maintained for debugging
 
+## Cache (Helper) 🗄️
+
+### The Problem
+
+When transforming data, you often need to enrich it with external information. Common examples:
+
+- **Profile pictures** from your auth provider (Auth0, Clerk, Firebase)
+- **User details** from an identity service
+- **Related entities** from your database
+- **Computed data** from external APIs
+
+Imagine you're transforming a list of 100 comments. If 20 of those comments are from the same user, a naive implementation would call your auth provider 100 times - once per comment. But you really only need to fetch each unique user once!
+
+This leads to:
+- **Rate limiting** from external services (auth providers often have strict limits)
+- **Unnecessary latency** from redundant network calls
+- **Wasted resources** on duplicate database queries
+
+### The Solution
+
+`Cache` wraps any async function and ensures calls with the same input resolve only once. Concurrent calls share the same promise - no duplicate requests, no race conditions.
+
+### Real-World Example: Profile Pictures
+
+```typescript
+import { AbstractTransformer, Cache } from "t7m";
+
+// Your auth provider client
+const auth = new AuthClient();
+
+// DB Comment type
+interface Comment {
+  id: number;
+  userId: string;
+  content: string;
+}
+
+// Public Comment with enriched user data
+interface PublicComment {
+  id: number;
+  content: string;
+  author?: {
+    name: string;
+    avatarUrl: string;
+  };
+}
+
+class CommentTransformer extends AbstractTransformer<Comment, PublicComment> {
+  // Cache for fetching user profiles - keyed by userId
+  cache = {
+    userProfile: new Cache((userId: string) => auth.getUser(userId)),
+  };
+
+  data(input: Comment): PublicComment {
+    return {
+      id: input.id,
+      content: input.content,
+    };
+  }
+
+  includesMap = {
+    author: async (input: Comment) => {
+      // This is cached! If 20 comments have the same userId,
+      // we only call auth.getUser() ONCE
+      const user = await this.cache.userProfile.call(input.userId);
+      return {
+        name: user.name,
+        avatarUrl: user.picture,
+      };
+    },
+  };
+}
+
+// Transform 100 comments - but only fetch each unique user once!
+const transformer = new CommentTransformer();
+const publicComments = await transformer.transformMany({
+  inputs: comments, // 100 comments, 20 unique users
+  includes: ["author"],
+});
+// Result: Only 20 auth provider calls instead of 100!
+```
+
+### Cache Auto-Clear
+
+By default, the transformer clears all caches after each `transform`/`transformMany` call. This prevents stale data between requests. You can disable this:
+
+```typescript
+class MyTransformer extends AbstractTransformer<Input, Output> {
+  constructor() {
+    super({ dropCacheOnTransform: false }); // Keep cache between transforms
+  }
+}
+
+// Or manually clear when needed
+transformer.clearCache();
+```
+
+### Basic Usage
+
+```typescript
+import { Cache } from "t7m";
+
+// Cache an async function
+const fetchUser = async (id: number) => db.users.findOne({ id });
+const cachedFetchUser = new Cache(fetchUser);
+
+// First call - executes the function
+const user1 = await cachedFetchUser.call(1);
+
+// Second call with same arg - returns cached promise
+const user2 = await cachedFetchUser.call(1); // No DB query!
+```
+
+### Object Arguments
+
+For object arguments, the cache key is generated from all object keys (sorted for consistency):
+
+```typescript
+const fetchUserByEmail = async (params: { email: string; tenantId: number }) =>
+  db.users.findOne(params);
+const cached = new Cache(fetchUserByEmail);
+
+// Same cache hit regardless of key order
+await cached.call({ email: "a@b.com", tenantId: 1 });
+await cached.call({ tenantId: 1, email: "a@b.com" }); // Cache hit!
+```
+
+### Selective Cache Keys
+
+Use rest params to specify which keys to use for the cache key:
+
+```typescript
+const fetchUser = async (params: { id: number; timestamp: number }) =>
+  db.users.findOne({ id: params.id });
+
+// Only cache on 'id', ignore 'timestamp'
+const cached = new Cache(fetchUser, "id");
+
+await cached.call({ id: 1, timestamp: 100 });
+await cached.call({ id: 1, timestamp: 200 }); // Cache hit! (timestamp ignored)
+```
+
+### Concurrent Request Deduplication
+
+The cache returns the same promise instance for concurrent calls:
+
+```typescript
+// All three calls share the same promise - only ONE auth call!
+const [user1, user2, user3] = await Promise.all([
+  cachedFetchUser.call("user-123"),
+  cachedFetchUser.call("user-123"),
+  cachedFetchUser.call("user-123"),
+]);
+```
+
 ## Props
 
 Some props to me for writing this here ^^. If you'd like to learn more about me just go to my github profile: https://github.com/tkoehlerlg or google me (Torben Köhler, the redhead) and send me a message on LinkedIn or whatever we will use in the future.
