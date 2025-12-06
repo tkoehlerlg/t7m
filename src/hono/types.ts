@@ -10,8 +10,7 @@ export type HeaderRecord =
 	| Record<ResponseHeader, string | string[]>
 	| Record<string, string | string[]>
 
-export type JSONRespondReturn<T, U extends ContentfulStatusCode> = Response &
-	TypedResponse<JSONParsed<T>, U, 'json'>
+export type JSONRespondReturn<T, U extends ContentfulStatusCode> = Response & TypedResponse<JSONParsed<T>, U, 'json'>
 
 export interface TransformRespond {
 	<
