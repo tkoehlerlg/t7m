@@ -245,7 +245,7 @@ const app = new Hono();
 
 app.use(t7mMiddleware());
 
-app.get("/users", async (c) => {
+app.call("/users", async (c) => {
   const users = await db.users;
   return c.transformMany(users, new UserTransformer(), { status: 200 }); // status is optional; maps to c.json(transformedUsers, 200)
   // c.transform for single objects

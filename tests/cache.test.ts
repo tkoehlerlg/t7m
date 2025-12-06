@@ -20,8 +20,8 @@ describe('Cache', () => {
 			const mock = createMockFn((s: string) => `result-${s}`)
 			const cache = new Cache(mock.fn)
 
-			const result1 = await cache.run('test')
-			const result2 = await cache.run('test')
+			const result1 = await cache.call('test')
+			const result2 = await cache.call('test')
 
 			expect(result1).toBe('result-test')
 			expect(result2).toBe('result-test')
@@ -31,8 +31,8 @@ describe('Cache', () => {
 			const mock = createMockFn((n: number) => n * 2)
 			const cache = new Cache(mock.fn)
 
-			const result1 = await cache.run(5)
-			const result2 = await cache.run(5)
+			const result1 = await cache.call(5)
+			const result2 = await cache.call(5)
 
 			expect(result1).toBe(10)
 			expect(result2).toBe(10)
@@ -42,9 +42,9 @@ describe('Cache', () => {
 			const mock = createMockFn((s: string) => `result-${s}`)
 			const cache = new Cache(mock.fn)
 
-			await cache.run('test')
-			await cache.run('test')
-			await cache.run('test')
+			await cache.call('test')
+			await cache.call('test')
+			await cache.call('test')
 
 			expect(mock.getCallCount()).toBe(1)
 		})
@@ -53,7 +53,7 @@ describe('Cache', () => {
 			const mock = createMockFn((s: string) => `result-${s}`)
 			const cache = new Cache(mock.fn)
 
-			const result = await cache.run('')
+			const result = await cache.call('')
 			expect(result).toBe('result-')
 			expect(mock.getCallCount()).toBe(1)
 		})
@@ -62,8 +62,8 @@ describe('Cache', () => {
 			const mock = createMockFn((n: string | number | symbol | object) => (n as number) * 2)
 			const cache = new Cache(mock.fn)
 
-			await cache.run(-5)
-			await cache.run(-5)
+			await cache.call(-5)
+			await cache.call(-5)
 
 			expect(mock.getCallCount()).toBe(1)
 		})
@@ -73,8 +73,8 @@ describe('Cache', () => {
 			const mock = createMockFn((s: string | number | symbol | object) => s.toString())
 			const cache = new Cache(mock.fn)
 
-			await cache.run(sym)
-			await cache.run(sym)
+			await cache.call(sym)
+			await cache.call(sym)
 
 			expect(mock.getCallCount()).toBe(1)
 		})
@@ -85,8 +85,8 @@ describe('Cache', () => {
 			const mock = createMockFn((obj: { a: number; b: string }) => `${obj.a}-${obj.b}`)
 			const cache = new Cache(mock.fn)
 
-			const result1 = await cache.run({ a: 1, b: 'hello' })
-			const result2 = await cache.run({ a: 1, b: 'hello' })
+			const result1 = await cache.call({ a: 1, b: 'hello' })
+			const result2 = await cache.call({ a: 1, b: 'hello' })
 
 			expect(result1).toBe('1-hello')
 			expect(result2).toBe('1-hello')
@@ -96,8 +96,8 @@ describe('Cache', () => {
 			const mock = createMockFn((obj: { a: number; b: string }) => `${obj.a}-${obj.b}`)
 			const cache = new Cache(mock.fn)
 
-			await cache.run({ a: 1, b: 'hello' })
-			await cache.run({ a: 1, b: 'hello' })
+			await cache.call({ a: 1, b: 'hello' })
+			await cache.call({ a: 1, b: 'hello' })
 
 			expect(mock.getCallCount()).toBe(1)
 		})
@@ -106,9 +106,9 @@ describe('Cache', () => {
 			const mock = createMockFn((obj: { a: number; b: string }) => `${obj.a}-${obj.b}`)
 			const cache = new Cache(mock.fn)
 
-			await cache.run({ a: 1, b: 'hello' })
-			await cache.run({ a: 2, b: 'hello' })
-			await cache.run({ a: 1, b: 'world' })
+			await cache.call({ a: 1, b: 'hello' })
+			await cache.call({ a: 2, b: 'hello' })
+			await cache.call({ a: 1, b: 'world' })
 
 			expect(mock.getCallCount()).toBe(3)
 		})
@@ -117,8 +117,8 @@ describe('Cache', () => {
 			const mock = createMockFn((obj: { a: number; b: string }) => `${obj.a}-${obj.b}`)
 			const cache = new Cache(mock.fn)
 
-			await cache.run({ a: 1, b: 'hello' })
-			await cache.run({ b: 'hello', a: 1 })
+			await cache.call({ a: 1, b: 'hello' })
+			await cache.call({ b: 'hello', a: 1 })
 
 			expect(mock.getCallCount()).toBe(1)
 		})
@@ -127,8 +127,8 @@ describe('Cache', () => {
 			const mock = createMockFn((obj: { a: number; b: unknown }) => `${obj.a}-${obj.b}`)
 			const cache = new Cache(mock.fn)
 
-			await cache.run({ a: 1, b: null })
-			await cache.run({ a: 1, b: null })
+			await cache.call({ a: 1, b: null })
+			await cache.call({ a: 1, b: null })
 
 			expect(mock.getCallCount()).toBe(1)
 		})
@@ -137,8 +137,8 @@ describe('Cache', () => {
 			const mock = createMockFn((obj: { a: number; b: unknown }) => `${obj.a}-${obj.b}`)
 			const cache = new Cache(mock.fn)
 
-			await cache.run({ a: 1, b: undefined })
-			await cache.run({ a: 1, b: undefined })
+			await cache.call({ a: 1, b: undefined })
+			await cache.call({ a: 1, b: undefined })
 
 			expect(mock.getCallCount()).toBe(1)
 		})
@@ -147,8 +147,8 @@ describe('Cache', () => {
 			const mock = createMockFn((obj: { id: number; data: object }) => obj.id)
 			const cache = new Cache(mock.fn)
 
-			await cache.run({ id: 1, data: { foo: 'bar' } })
-			await cache.run({ id: 1, data: { foo: 'bar' } })
+			await cache.call({ id: 1, data: { foo: 'bar' } })
+			await cache.call({ id: 1, data: { foo: 'bar' } })
 
 			// Note: nested objects serialize to "[object Object]" so both hit same cache
 			expect(mock.getCallCount()).toBe(1)
@@ -160,8 +160,8 @@ describe('Cache', () => {
 			const mock = createMockFn((obj: { id: number; name: string; timestamp: number }) => obj.id)
 			const cache = new Cache(mock.fn, 'id')
 
-			const result1 = await cache.run({ id: 1, name: 'test', timestamp: 100 })
-			const result2 = await cache.run({ id: 1, name: 'test', timestamp: 200 })
+			const result1 = await cache.call({ id: 1, name: 'test', timestamp: 100 })
+			const result2 = await cache.call({ id: 1, name: 'test', timestamp: 200 })
 
 			expect(result1).toBe(1)
 			expect(result2).toBe(1)
@@ -172,9 +172,9 @@ describe('Cache', () => {
 			const mock = createMockFn((obj: { id: number; name: string; extra: string }) => `${obj.id}-${obj.name}`)
 			const cache = new Cache(mock.fn, 'id', 'name')
 
-			await cache.run({ id: 1, name: 'test', extra: 'a' })
-			await cache.run({ id: 1, name: 'test', extra: 'b' })
-			await cache.run({ id: 1, name: 'test', extra: 'c' })
+			await cache.call({ id: 1, name: 'test', extra: 'a' })
+			await cache.call({ id: 1, name: 'test', extra: 'b' })
+			await cache.call({ id: 1, name: 'test', extra: 'c' })
 
 			expect(mock.getCallCount()).toBe(1)
 		})
@@ -185,8 +185,8 @@ describe('Cache', () => {
 			const mock = createMockFn((s: string) => `result-${s}`)
 			const cache = new Cache(mock.fn)
 
-			const promise1 = cache.run('test')
-			const promise2 = cache.run('test')
+			const promise1 = cache.call('test')
+			const promise2 = cache.call('test')
 
 			expect(promise1).toBe(promise2)
 		})
@@ -196,15 +196,30 @@ describe('Cache', () => {
 			const cache = new Cache(mock.fn)
 
 			const [result1, result2, result3] = await Promise.all([
-				cache.run('concurrent'),
-				cache.run('concurrent'),
-				cache.run('concurrent'),
+				cache.call('concurrent'),
+				cache.call('concurrent'),
+				cache.call('concurrent'),
 			])
 
 			expect(result1).toBe('result-concurrent')
 			expect(result2).toBe('result-concurrent')
 			expect(result3).toBe('result-concurrent')
 			expect(mock.getCallCount()).toBe(1)
+		})
+	})
+
+	describe('Cache clearing', () => {
+		it('should clear cache and re-execute function', async () => {
+			const mock = createMockFn((s: string) => `result-${s}`)
+			const cache = new Cache(mock.fn)
+
+			await cache.call('test')
+			expect(mock.getCallCount()).toBe(1)
+
+			cache.clear()
+
+			await cache.call('test')
+			expect(mock.getCallCount()).toBe(2)
 		})
 	})
 })
