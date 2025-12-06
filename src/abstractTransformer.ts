@@ -1,3 +1,4 @@
+import { Cache } from './cache'
 import type { OnlyPossiblyUndefined } from './types'
 
 /**
@@ -26,6 +27,14 @@ export abstract class AbstractTransformer<
 	Props extends Record<string, unknown> | undefined = undefined,
 	Includes extends keyof OnlyPossiblyUndefined<TOutput> = keyof OnlyPossiblyUndefined<TOutput>,
 > {
+	private readonly dropCacheOnTransform: boolean
+
+	// MARK: Constructor
+	constructor(params?: { dropCacheOnTransform?: boolean }) {
+		this.dropCacheOnTransform = params?.dropCacheOnTransform ?? true
+	}
+
+	// MARK: Data
 	/**
 	 * Abstract method that must be implemented by subclasses to provide the core transformation logic.
 	 * @param input The input object to transform.
@@ -34,6 +43,7 @@ export abstract class AbstractTransformer<
 	 */
 	protected abstract data(input: TInput, props: Props): TOutput | Promise<TOutput>
 
+	// MARK: Includes
 	/**
 	 * Map of include functions for each possible include.
 	 * @template K The key of the output object to include.
@@ -43,8 +53,12 @@ export abstract class AbstractTransformer<
 		[K in Includes]: IncludeFunction<TInput, TOutput, K, Props>
 	}> = {}
 
-	// Transform functions
+	// MARK: Cache
+	readonly cache: Record<string, Cache<unknown>> = {}
 
+	public clearCache = () => Object.keys(this.cache).forEach(key => this.cache[key]?.clear())
+
+	// MARK: Transform functions
 	/**
 	 * Transforms a single input object.
 	 * @param params The parameters for the transformation.
@@ -80,7 +94,6 @@ export abstract class AbstractTransformer<
 	}
 
 	// Generic functions
-
 	/**
 	 * Transforms a single input object. (Easier to use in generic functions)
 	 * @param params The parameters for the transformation.
@@ -94,7 +107,9 @@ export abstract class AbstractTransformer<
 	}): Promise<TOutput> {
 		const { input, props, includes, unsafeIncludes } = params
 		const combinedIncludes = [...(includes || []), ...(unsafeIncludes || [])]
-		return this.__transform(input, props, combinedIncludes)
+		const output = this.__transform(input, props, combinedIncludes)
+		if (this.dropCacheOnTransform) this.clearCache()
+		return output
 	}
 
 	/**
@@ -110,7 +125,9 @@ export abstract class AbstractTransformer<
 	}): Promise<TOutput[]> {
 		const { inputs, props, includes, unsafeIncludes } = params
 		const combinedIncludes = [...(includes || []), ...(unsafeIncludes || [])]
-		return Promise.all(inputs.map(input => this.__transform(input, props, combinedIncludes)))
+		const outputArray = Promise.all(inputs.map(input => this.__transform(input, props, combinedIncludes)))
+		if (this.dropCacheOnTransform) this.clearCache()
+		return outputArray
 	}
 
 	// Internal transformation function

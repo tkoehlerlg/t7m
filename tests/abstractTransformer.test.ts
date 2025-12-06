@@ -2,6 +2,7 @@
 
 import { describe, expect, it } from 'bun:test'
 import { AbstractTransformer } from '../src/abstractTransformer'
+import { Cache } from '../src/cache'
 
 // Test data types
 interface User {
@@ -266,6 +267,164 @@ describe('AbstractTransformer', () => {
 			const results = await transformer.transformMany({ inputs: [] })
 
 			expect(results).toEqual([])
+		})
+	})
+
+	describe('Cache integration', () => {
+		// Helper to track function calls
+		const createMockFetcher = () => {
+			let callCount = 0
+			const fn = async (userId: number) => {
+				callCount++
+				return { avatarUrl: `https://avatar.com/${userId}` }
+			}
+			return { fn, getCallCount: () => callCount }
+		}
+
+		it('should cache async calls within transformMany', async () => {
+			const mockFetcher = createMockFetcher()
+
+			class CachedTransformer extends AbstractTransformer<User, PublicUser> {
+				cache = {
+					avatarFetcher: new Cache(mockFetcher.fn),
+				}
+
+				data(input: User): PublicUser {
+					return { name: input.name, email: input.email }
+				}
+
+				includesMap = {
+					avatar: async (input: User) => {
+						const result = await this.cache.avatarFetcher.call(input.id)
+						return result.avatarUrl
+					},
+				}
+			}
+
+			const transformer = new CachedTransformer()
+
+			// Transform 3 users where 2 have the same id
+			const users: User[] = [
+				{ id: 1, name: 'User 1', email: 'u1@test.com', role: 'user' },
+				{ id: 2, name: 'User 2', email: 'u2@test.com', role: 'user' },
+				{ id: 1, name: 'User 1 again', email: 'u1b@test.com', role: 'admin' },
+			]
+
+			const results = await transformer.transformMany({
+				inputs: users,
+				includes: ['avatar'],
+			})
+
+			expect(results).toHaveLength(3)
+			expect(results[0]!.avatar).toBe('https://avatar.com/1')
+			expect(results[1]!.avatar).toBe('https://avatar.com/2')
+			expect(results[2]!.avatar).toBe('https://avatar.com/1')
+			// Only 2 fetcher calls (ids 1 and 2), not 3
+			expect(mockFetcher.getCallCount()).toBe(2)
+		})
+
+		it('should clear cache after _transform by default', async () => {
+			const mockFetcher = createMockFetcher()
+
+			class CachedTransformer extends AbstractTransformer<User, PublicUser> {
+				cache = {
+					avatarFetcher: new Cache(mockFetcher.fn),
+				}
+
+				data(input: User): PublicUser {
+					return { name: input.name, email: input.email }
+				}
+
+				includesMap = {
+					avatar: async (input: User) => {
+						const result = await this.cache.avatarFetcher.call(input.id)
+						return result.avatarUrl
+					},
+				}
+			}
+
+			const transformer = new CachedTransformer()
+
+			// First transform
+			await transformer._transform({ input: testUser, props: undefined, includes: ['avatar'] })
+			expect(mockFetcher.getCallCount()).toBe(1)
+
+			// Second transform - cache should be cleared, so fetcher called again
+			await transformer._transform({ input: testUser, props: undefined, includes: ['avatar'] })
+			expect(mockFetcher.getCallCount()).toBe(2)
+		})
+
+		it('should keep cache when dropCacheOnTransform is false', async () => {
+			const mockFetcher = createMockFetcher()
+
+			class PersistentCacheTransformer extends AbstractTransformer<User, PublicUser> {
+				constructor() {
+					super({ dropCacheOnTransform: false })
+				}
+
+				cache = {
+					avatarFetcher: new Cache(mockFetcher.fn),
+				}
+
+				data(input: User): PublicUser {
+					return { name: input.name, email: input.email }
+				}
+
+				includesMap = {
+					avatar: async (input: User) => {
+						const result = await this.cache.avatarFetcher.call(input.id)
+						return result.avatarUrl
+					},
+				}
+			}
+
+			const transformer = new PersistentCacheTransformer()
+
+			// First transform
+			await transformer._transform({ input: testUser, props: undefined, includes: ['avatar'] })
+			expect(mockFetcher.getCallCount()).toBe(1)
+
+			// Second transform - cache should persist, so no new fetcher call
+			await transformer._transform({ input: testUser, props: undefined, includes: ['avatar'] })
+			expect(mockFetcher.getCallCount()).toBe(1)
+		})
+
+		it('should manually clear cache with clearCache()', async () => {
+			const mockFetcher = createMockFetcher()
+
+			class PersistentCacheTransformer extends AbstractTransformer<User, PublicUser> {
+				constructor() {
+					super({ dropCacheOnTransform: false })
+				}
+
+				cache = {
+					avatarFetcher: new Cache(mockFetcher.fn),
+				}
+
+				data(input: User): PublicUser {
+					return { name: input.name, email: input.email }
+				}
+
+				includesMap = {
+					avatar: async (input: User) => {
+						const result = await this.cache.avatarFetcher.call(input.id)
+						return result.avatarUrl
+					},
+				}
+			}
+
+			const transformer = new PersistentCacheTransformer()
+
+			// First transform
+			await transformer._transform({ input: testUser, props: undefined, includes: ['avatar'] })
+			expect(mockFetcher.getCallCount()).toBe(1)
+
+			// Clear cache manually
+			transformer.clearCache()
+
+			// Third transform - cache cleared, so fetcher called again
+			await transformer._transform({ input: testUser, props: undefined, includes: ['avatar'] })
+			expect(mockFetcher.getCallCount()).toBe(2)
 		})
 	})
 })
