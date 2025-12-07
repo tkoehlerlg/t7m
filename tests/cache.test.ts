@@ -222,4 +222,74 @@ describe('Cache', () => {
 			expect(mock.getCallCount()).toBe(2)
 		})
 	})
+
+	describe('Performance', () => {
+		it('should be fast for primitive lookups', async () => {
+			const mock = createMockFn((n: number) => n * 2)
+			const cache = new Cache(mock.fn)
+			const iterations = 10000
+
+			// Warm up cache
+			await cache.call(1)
+
+			const start = performance.now()
+			for (let i = 0; i < iterations; i++) {
+				await cache.call(1)
+			}
+			const duration = performance.now() - start
+
+			console.log(
+				`Primitive cache: ${iterations} lookups in ${duration.toFixed(2)}ms (${((duration / iterations) * 1000).toFixed(2)}µs/op)`
+			)
+			expect(mock.getCallCount()).toBe(1)
+		})
+
+		it('should be fast for object lookups', async () => {
+			const mock = createMockFn((obj: { id: number; name: string }) => obj.id)
+			const cache = new Cache(mock.fn, 'id', 'name')
+			const iterations = 10000
+
+			// Warm up cache
+			await cache.call({ id: 1, name: 'test' })
+
+			const start = performance.now()
+			for (let i = 0; i < iterations; i++) {
+				await cache.call({ id: 1, name: 'test' })
+			}
+			const duration = performance.now() - start
+
+			console.log(
+				`Object cache: ${iterations} lookups in ${duration.toFixed(2)}ms (${((duration / iterations) * 1000).toFixed(2)}µs/op)`
+			)
+			expect(mock.getCallCount()).toBe(1)
+		})
+
+		it('should compare cached vs uncached performance', async () => {
+			const iterations = 1000
+
+			// Simulate slow async operation
+			const slowFn = async (n: number) => {
+				await new Promise(resolve => setTimeout(resolve, 1))
+				return n * 2
+			}
+			const cache = new Cache(slowFn)
+
+			// Uncached (first call)
+			const uncachedStart = performance.now()
+			await cache.call(1)
+			const uncachedDuration = performance.now() - uncachedStart
+
+			// Cached
+			const cachedStart = performance.now()
+			for (let i = 0; i < iterations; i++) {
+				await cache.call(1)
+			}
+			const cachedDuration = performance.now() - cachedStart
+
+			console.log(
+				`Uncached: ${uncachedDuration.toFixed(2)}ms | Cached (${iterations}x): ${cachedDuration.toFixed(2)}ms`
+			)
+			expect(cachedDuration).toBeLessThan(uncachedDuration * iterations)
+		})
+	})
 })
