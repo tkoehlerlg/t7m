@@ -47,7 +47,7 @@ export class Cache<R, FN extends (arg: any) => Promise<R> = (arg: any) => Promis
 	 * @param arg - The argument to pass to the cached function
 	 * @returns The promise from cache or a new execution
 	 */
-	public call(arg: Parameters<FN>[0]): ReturnType<FN> {
+	public call(arg: Parameters<FN>[0]): Promise<R> {
 		let cacheKey: string
 		if (typeof arg !== 'object') {
 			cacheKey = arg.toString()
@@ -61,7 +61,7 @@ export class Cache<R, FN extends (arg: any) => Promise<R> = (arg: any) => Promis
 			promise = this.fn(arg as Parameters<FN>[0])
 			this.cache.set(cacheKey, promise)
 		}
-		return promise as ReturnType<FN>
+		return promise
 	}
 
 	/** Clears all cached promises. */
