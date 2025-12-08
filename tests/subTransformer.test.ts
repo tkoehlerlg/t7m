@@ -854,5 +854,61 @@ describe('SubTransformer Tests', () => {
 			expect(clearLog.filter(log => log === 'child:clear').length).toBe(1)
 			expect(clearLog.indexOf('child:clear')).toBeGreaterThan(clearLog.indexOf('child:data'))
 		})
+
+		it('should restore child clearCacheOnTransform after parent completes', async () => {
+			resetClearLog()
+			resetFetchCounts()
+
+			// Child with clearCacheOnTransform: true (default would be true, but we set explicitly)
+			class RestoredChildTransformer extends AbstractTransformer<Author, AuthorOutput> {
+				constructor() {
+					super({ clearCacheOnTransform: true })
+				}
+
+				data(input: Author): AuthorOutput {
+					return { id: input.id, name: input.name }
+				}
+			}
+
+			class RestoredParentTransformer extends AbstractTransformer<Post, PostOutput> {
+				childTransformer = new RestoredChildTransformer()
+
+				constructor() {
+					super({ clearCacheOnTransform: true })
+					this.transformers = { child: this.childTransformer }
+				}
+
+				data(input: Post): PostOutput {
+					return { id: input.id, title: input.title }
+				}
+
+				includesMap = {
+					author: async (input: Post) => {
+						const author = await fetchAuthorById(input.authorId)
+						if (!author) return undefined
+						return this.childTransformer.transform({ input: author })
+					},
+				}
+			}
+
+			const parent = new RestoredParentTransformer()
+
+			// Access protected property via type assertion for testing
+			const getChildClearCache = () =>
+				(parent.childTransformer as unknown as { clearCacheOnTransform: boolean }).clearCacheOnTransform
+
+			// Before transform, child should have clearCacheOnTransform: true
+			expect(getChildClearCache()).toBe(true)
+
+			// Run parent transform
+			await parent._transform({
+				input: posts[0]!,
+				props: undefined,
+				includes: ['author'],
+			})
+
+			// After transform completes, child's clearCacheOnTransform should be restored to true
+			expect(getChildClearCache()).toBe(true)
+		})
 	})
 })

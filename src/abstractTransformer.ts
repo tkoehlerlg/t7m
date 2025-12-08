@@ -76,9 +76,12 @@ abstract class AbstractTransformer<
 	}
 
 	// Executed in child transformers to prevent them from clearing cache mid-transform
+	private originalClearCacheOnTransform: boolean | null = null
+
 	private disableClearCacheForTransformers = (visited: Set<string>) => {
 		if (visited.has(this.signature)) return // Already visited, prevent infinite loop
 		visited.add(this.signature)
+		this.originalClearCacheOnTransform = this.clearCacheOnTransform
 		this.clearCacheOnTransform = false
 		Object.keys(this.transformers).forEach(key => {
 			const transformer = this.transformers[key]!
@@ -88,24 +91,42 @@ abstract class AbstractTransformer<
 		})
 	}
 
-	// MARK: Transformer
-	transformers: Record<string, AnyAbstractTransformer | Cache<() => AnyAbstractTransformer>> = {}
-
-	private transformerBackup: Record<string, AnyAbstractTransformer | Cache<() => AnyAbstractTransformer>> = {}
-
-	private onBeforeTransform = () => {
-		this.transformerBackup = this.transformers
-		const set = new Set<string>([this.signature])
+	private restoreClearCacheForTransformers = (visited: Set<string>) => {
+		if (visited.has(this.signature)) return
+		visited.add(this.signature)
+		if (this.originalClearCacheOnTransform !== null) {
+			this.clearCacheOnTransform = this.originalClearCacheOnTransform
+			this.originalClearCacheOnTransform = null
+		}
 		Object.keys(this.transformers).forEach(key => {
 			const transformer = this.transformers[key]!
 			if ('call' in transformer) {
-				transformer.call().disableClearCacheForTransformers(set)
-			} else transformer.disableClearCacheForTransformers(set)
+				transformer.call().restoreClearCacheForTransformers(visited)
+			} else transformer.restoreClearCacheForTransformers(visited)
+		})
+	}
+
+	// MARK: Transformer
+	transformers: Record<string, AnyAbstractTransformer | Cache<() => AnyAbstractTransformer>> = {}
+
+	private onBeforeTransform = () => {
+		const visited = new Set<string>([this.signature])
+		Object.keys(this.transformers).forEach(key => {
+			const transformer = this.transformers[key]!
+			if ('call' in transformer) {
+				transformer.call().disableClearCacheForTransformers(visited)
+			} else transformer.disableClearCacheForTransformers(visited)
 		})
 	}
 
 	private onAfterTransform = () => {
-		this.transformers = this.transformerBackup
+		const visited = new Set<string>([this.signature])
+		Object.keys(this.transformers).forEach(key => {
+			const transformer = this.transformers[key]!
+			if ('call' in transformer) {
+				transformer.call().restoreClearCacheForTransformers(visited)
+			} else transformer.restoreClearCacheForTransformers(visited)
+		})
 	}
 
 	/**
