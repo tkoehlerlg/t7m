@@ -14,6 +14,9 @@ type IncludeFunction<TInput, TOutput, K extends keyof TOutput, Props> = (
 	forwardedIncludes: string[]
 ) => Promise<TOutput[K]> | TOutput[K]
 
+/** Counter for unique transformer signatures. Uses counter instead of crypto.randomUUID() for Cloudflare Workers compatibility. */
+let transformerIdCounter = 0
+
 /**
  * Abstract transformer class.
  * @template TInput The type of the input object.
@@ -28,7 +31,7 @@ abstract class AbstractTransformer<
 	Includes extends keyof OnlyPossiblyUndefined<TOutput> = keyof OnlyPossiblyUndefined<TOutput>,
 > {
 	protected clearCacheOnTransform: boolean
-	private readonly signature = crypto.randomUUID()
+	private readonly signature = `t7m-${++transformerIdCounter}`
 
 	// MARK: Constructor
 	/**
