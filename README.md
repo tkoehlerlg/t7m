@@ -38,6 +38,14 @@ Any API returning database data. Especially useful for APIs with includes (relat
 - [Performance & Security](#performance--security)
 - [Author](#author)
 
+## Quick Start
+
+```bash
+npm install t7m
+# or
+bun add t7m
+```
+
 ## API Overview
 
 **AbstractTransformer:**
@@ -57,14 +65,6 @@ Any API returning database data. Especially useful for APIs with includes (relat
 | `new Cache(fn, ...keys?)` | Create cache (0 or 1 arg function) |
 | `call(...args)` | Call cached function |
 | `clear()` | Clear cache |
-
-## Quick Start
-
-```bash
-npm install t7m
-# or
-bun add t7m
-```
 
 ## AbstractTransformer
 
