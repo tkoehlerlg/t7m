@@ -81,7 +81,8 @@ abstract class AbstractTransformer<
 	private disableClearCacheForTransformers = (visited: Set<string>) => {
 		if (visited.has(this.signature)) return // Already visited, prevent infinite loop
 		visited.add(this.signature)
-		this.originalClearCacheOnTransform = this.clearCacheOnTransform
+		// Only backup if not already backed up (prevents overwriting with already-disabled value)
+		if (this.originalClearCacheOnTransform === null) this.originalClearCacheOnTransform = this.clearCacheOnTransform
 		this.clearCacheOnTransform = false
 		Object.keys(this.transformers).forEach(key => {
 			const transformer = this.transformers[key]!
@@ -110,6 +111,8 @@ abstract class AbstractTransformer<
 	transformers: Record<string, AnyAbstractTransformer | Cache<() => AnyAbstractTransformer>> = {}
 
 	private onBeforeTransform = () => {
+		// Already executed by parent transformer, skip
+		if (this.originalClearCacheOnTransform !== null) return
 		const visited = new Set<string>([this.signature])
 		Object.keys(this.transformers).forEach(key => {
 			const transformer = this.transformers[key]!
@@ -120,6 +123,8 @@ abstract class AbstractTransformer<
 	}
 
 	private onAfterTransform = () => {
+		// Was executed by parent, parent will restore
+		if (this.originalClearCacheOnTransform !== null) return
 		const visited = new Set<string>([this.signature])
 		Object.keys(this.transformers).forEach(key => {
 			const transformer = this.transformers[key]!
