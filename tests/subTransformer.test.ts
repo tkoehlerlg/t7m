@@ -827,12 +827,7 @@ describe('SubTransformer Tests', () => {
 			// 3. parent:clear - ONLY parent clears at the end (which cascades to child)
 			// 4. child:clear - triggered by parent's clearCache cascade
 
-			expect(clearLog).toEqual([
-				'parent:data',
-				'child:data',
-				'parent:clear',
-				'child:clear',
-			])
+			expect(clearLog).toEqual(['parent:data', 'child:data', 'parent:clear', 'child:clear'])
 
 			// Verify child did NOT clear in the middle (no 'child:clear' between data calls)
 			const childDataIndex = clearLog.indexOf('child:data')
