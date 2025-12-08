@@ -1,4 +1,4 @@
-import { Cache } from './cache'
+import type { AnyCache, Cache } from './cache'
 import type { OnlyPossiblyUndefined } from './types'
 
 /**
@@ -8,7 +8,7 @@ import type { OnlyPossiblyUndefined } from './types'
  * @template K The key of the output object to include.
  * @template Props The type of the props object.
  */
-export type IncludeFunction<TInput, TOutput, K extends keyof TOutput, Props> = (
+type IncludeFunction<TInput, TOutput, K extends keyof TOutput, Props> = (
 	input: TInput,
 	props: Props,
 	forwardedIncludes: string[]
@@ -21,7 +21,7 @@ export type IncludeFunction<TInput, TOutput, K extends keyof TOutput, Props> = (
  * @template Props The type of the props object.
  * @template Includes The type of the includes object.
  */
-export abstract class AbstractTransformer<
+abstract class AbstractTransformer<
 	TInput,
 	TOutput,
 	Props extends Record<string, unknown> | undefined = undefined,
@@ -30,6 +30,11 @@ export abstract class AbstractTransformer<
 	private readonly dropCacheOnTransform: boolean
 
 	// MARK: Constructor
+	/**
+	 * Creates a new transformer instance.
+	 * @param params - Configuration options for the transformer.
+	 * @param params.dropCacheOnTransform - Whether to clear the cache after each transform call. Defaults to `true`.
+	 */
 	constructor(params?: { dropCacheOnTransform?: boolean }) {
 		this.dropCacheOnTransform = params?.dropCacheOnTransform ?? true
 	}
@@ -54,11 +59,25 @@ export abstract class AbstractTransformer<
 	}> = {}
 
 	// MARK: Cache
-	readonly cache: Record<string, Cache<unknown>> = {}
+	readonly cache: Record<string, AnyCache> = {}
 
-	public clearCache = () => Object.keys(this.cache).forEach(key => this.cache[key]?.clear())
+	public clearCache = () => this._clearCache()
 
-	// MARK: Transform functions
+	private _clearCache = (clearedFor: Set<AnyAbstractTransformer> = new Set()) => {
+		if (clearedFor.has(this)) return
+		Object.keys(this.cache).forEach(key => this.cache[key]?.clear())
+		clearedFor.add(this)
+		Object.keys(this.transformers).forEach(key => {
+			const transformer = this.transformers[key]
+			if (!transformer) return
+			if ('call' in transformer) return transformer.call()._clearCache(clearedFor)
+			transformer._clearCache(clearedFor)
+		})
+	}
+
+	// MARK: Transformer
+	transformers: Record<string, AnyAbstractTransformer | Cache<() => AnyAbstractTransformer>> = {}
+
 	/**
 	 * Transforms a single input object.
 	 * @param params The parameters for the transformation.
@@ -170,3 +189,8 @@ export abstract class AbstractTransformer<
 		return data
 	}
 }
+
+// MARK: Export
+export { AbstractTransformer, type IncludeFunction }
+// biome-ignore lint/suspicious/noExplicitAny: any is required for the generic type
+export type AnyAbstractTransformer = AbstractTransformer<any, any, any, any>

@@ -3,7 +3,8 @@ import type { ResponseHeader } from 'hono/utils/headers'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import type { BaseMime } from 'hono/utils/mime'
 import type { JSONParsed } from 'hono/utils/types'
-import { AnyAbstractTransformer, IncludesOf, InputOf, OutputOf, PropsOf } from '../typeHelper'
+import type { AnyAbstractTransformer } from '../abstractTransformer'
+import type { IncludesOf, InputOf, OutputOf, PropsOf } from '../typeHelper'
 
 export type HeaderRecord =
 	| Record<'Content-Type', BaseMime>

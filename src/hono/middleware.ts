@@ -1,6 +1,7 @@
 import { createMiddleware } from 'hono/factory'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
-import { AnyAbstractTransformer, IncludesOf, InputOf, OutputOf, PropsOf } from '../typeHelper'
+import { AnyAbstractTransformer } from '../abstractTransformer'
+import { IncludesOf, InputOf, OutputOf, PropsOf } from '../typeHelper'
 import type { HeaderRecord, JSONRespondReturn } from './types'
 
 const T7M_PREFIX = '\x1b[36m[T7M]\x1b[0m'

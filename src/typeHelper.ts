@@ -1,7 +1,4 @@
-import { AbstractTransformer } from './abstractTransformer'
-
-// biome-ignore lint/suspicious/noExplicitAny: using `any` for type parameter extraction - precision not required for conditional type inference
-export type AnyAbstractTransformer = AbstractTransformer<any, any, any, any>
+import type { AbstractTransformer } from './abstractTransformer'
 
 // biome-ignore lint/suspicious/noExplicitAny: using `any` for type parameter extraction - precision not required for conditional type inference
 export type InputOf<T> = T extends AbstractTransformer<infer I, any, any, any> ? I : never
