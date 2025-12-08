@@ -1,6 +1,10 @@
 /**
- * A type-safe promise cache for async functions.
- * Ensures calls with the same input resolve only once - concurrent calls share the same promise.
+ * A type-safe function cache.
+ * Caches results by input - subsequent calls with the same input return the cached result.
+ * For async functions, concurrent calls share the same promise.
+ *
+ * Requirements:
+ * - The function must have exactly one argument
  *
  * @example
  * ```ts
@@ -8,7 +12,7 @@
  * const cached = new Cache(fetchUser);
  *
  * await cached.call(1); // Executes function
- * await cached.call(1); // Returns cached promise
+ * await cached.call(1); // Returns cached result
  * ```
  *
  * @example With selective cache keys
@@ -17,22 +21,22 @@
  * ```
  */
 // biome-ignore lint/suspicious/noExplicitAny: any is required for the generic type
-export class Cache<R, FN extends (arg: any) => Promise<R> = (arg: any) => Promise<R>> {
+class Cache<FN extends (() => any) | ((arg: any) => any)> {
 	private readonly cacheOnObjectParams?: (keyof Parameters<FN>[0])[]
 
 	/**
 	 * Creates a new Cache instance.
-	 * @param fn - The async function to cache
+	 * @param fn - The function to cache
 	 * @param on - For object args: keys to use for cache key (default: all keys)
 	 */
 	constructor(
-		public fn: FN,
+		readonly fn: FN,
 		...on: Parameters<FN>[0] extends Record<string, unknown> ? (keyof Parameters<FN>[0])[] : []
 	) {
 		this.cacheOnObjectParams = on.length > 0 ? on : undefined
 	}
 
-	private cache = new Map<string, Promise<R>>()
+	private cache = new Map<string, ReturnType<FN>>()
 
 	private objectCacheKey(keys: (keyof Parameters<FN>[0])[], arg: Parameters<FN>[0]): string {
 		return keys
@@ -47,7 +51,8 @@ export class Cache<R, FN extends (arg: any) => Promise<R> = (arg: any) => Promis
 	 * @param arg - The argument to pass to the cached function
 	 * @returns The promise from cache or a new execution
 	 */
-	public call(arg: Parameters<FN>[0]): Promise<R> {
+	public call(...args: Parameters<FN>): ReturnType<FN> {
+		const arg = args[0] ?? 'default-key'
 		let cacheKey: string
 		if (typeof arg !== 'object') {
 			cacheKey = arg.toString()
@@ -56,14 +61,19 @@ export class Cache<R, FN extends (arg: any) => Promise<R> = (arg: any) => Promis
 		} else {
 			cacheKey = this.objectCacheKey(Object.keys(arg) as (keyof Parameters<FN>[0])[], arg)
 		}
-		let promise = this.cache.get(cacheKey)
-		if (!promise) {
-			promise = this.fn(arg as Parameters<FN>[0])
-			this.cache.set(cacheKey, promise)
+		let result = this.cache.get(cacheKey)
+		if (!result) {
+			result = (this.fn as (...args: Parameters<FN>) => ReturnType<FN>)(...args)
+			this.cache.set(cacheKey, result as ReturnType<FN>)
 		}
-		return promise
+		return result as ReturnType<FN>
 	}
 
 	/** Clears all cached promises. */
 	clear = () => this.cache.clear()
 }
+
+// MARK: Export
+export { Cache }
+// biome-ignore lint/suspicious/noExplicitAny: any is required for the generic type
+export type AnyCache = Cache<any>

@@ -15,6 +15,58 @@ describe('Cache', () => {
 		}
 	}
 
+	describe('Zero arguments', () => {
+		it('should cache result for 0-arg function', async () => {
+			let callCount = 0
+			const fn = async () => {
+				callCount++
+				return 'result'
+			}
+			const cache = new Cache(fn)
+
+			const result1 = await cache.call()
+			const result2 = await cache.call()
+
+			expect(result1).toBe('result')
+			expect(result2).toBe('result')
+			expect(callCount).toBe(1)
+		})
+
+		it('should call 0-arg function only once for repeated calls', async () => {
+			let callCount = 0
+			const fn = async () => {
+				callCount++
+				return Date.now()
+			}
+			const cache = new Cache(fn)
+
+			await cache.call()
+			await cache.call()
+			await cache.call()
+
+			expect(callCount).toBe(1)
+		})
+
+		it('should clear cache and re-execute 0-arg function', async () => {
+			let callCount = 0
+			const fn = async () => {
+				callCount++
+				return callCount
+			}
+			const cache = new Cache(fn)
+
+			const result1 = await cache.call()
+			expect(result1).toBe(1)
+			expect(callCount).toBe(1)
+
+			cache.clear()
+
+			const result2 = await cache.call()
+			expect(result2).toBe(2)
+			expect(callCount).toBe(2)
+		})
+	})
+
 	describe('Primitive arguments', () => {
 		it('should cache result for primitive string arg', async () => {
 			const mock = createMockFn((s: string) => `result-${s}`)
