@@ -14,9 +14,6 @@ type IncludeFunction<TInput, TOutput, K extends keyof TOutput, Props> = (
 	forwardedIncludes: string[]
 ) => Promise<TOutput[K]> | TOutput[K]
 
-/** Counter for unique transformer signatures. Uses counter instead of crypto.randomUUID() for Cloudflare Workers compatibility. */
-let transformerIdCounter = 0
-
 /**
  * Abstract transformer class.
  * @template TInput The type of the input object.
@@ -31,7 +28,6 @@ abstract class AbstractTransformer<
 	Includes extends keyof OnlyPossiblyUndefined<TOutput> = keyof OnlyPossiblyUndefined<TOutput>,
 > {
 	protected clearCacheOnTransform: boolean
-	private readonly signature = `t7m-${++transformerIdCounter}`
 
 	// MARK: Constructor
 	/**
@@ -67,10 +63,10 @@ abstract class AbstractTransformer<
 
 	public clearCache = () => this._clearCache()
 
-	private _clearCache = (clearedFor: Set<string> = new Set()) => {
-		if (clearedFor.has(this.signature)) return
+	private _clearCache = (clearedFor: Set<AnyAbstractTransformer> = new Set()) => {
+		if (clearedFor.has(this)) return
 		Object.keys(this.cache).forEach(key => this.cache[key]?.clear())
-		clearedFor.add(this.signature)
+		clearedFor.add(this)
 		Object.keys(this.transformers).forEach(key => {
 			const transformer = this.transformers[key]!
 			if ('call' in transformer) return transformer.call()._clearCache(clearedFor)
@@ -81,9 +77,9 @@ abstract class AbstractTransformer<
 	// Executed in child transformers to prevent them from clearing cache mid-transform
 	private originalClearCacheOnTransform: boolean | null = null
 
-	private disableClearCacheForTransformers = (visited: Set<string>) => {
-		if (visited.has(this.signature)) return // Already visited, prevent infinite loop
-		visited.add(this.signature)
+	private disableClearCacheForTransformers = (visited: Set<AnyAbstractTransformer>) => {
+		if (visited.has(this)) return // Already visited, prevent infinite loop
+		visited.add(this)
 		// Only backup if not already backed up (prevents overwriting with already-disabled value)
 		if (this.originalClearCacheOnTransform === null) this.originalClearCacheOnTransform = this.clearCacheOnTransform
 		this.clearCacheOnTransform = false
@@ -95,9 +91,9 @@ abstract class AbstractTransformer<
 		})
 	}
 
-	private restoreClearCacheForTransformers = (visited: Set<string>) => {
-		if (visited.has(this.signature)) return
-		visited.add(this.signature)
+	private restoreClearCacheForTransformers = (visited: Set<AnyAbstractTransformer>) => {
+		if (visited.has(this)) return
+		visited.add(this)
 		if (this.originalClearCacheOnTransform !== null) {
 			this.clearCacheOnTransform = this.originalClearCacheOnTransform
 			this.originalClearCacheOnTransform = null
@@ -116,7 +112,7 @@ abstract class AbstractTransformer<
 	private onBeforeTransform = () => {
 		// Already executed by parent transformer, skip
 		if (this.originalClearCacheOnTransform !== null) return
-		const visited = new Set<string>([this.signature])
+		const visited = new Set<AnyAbstractTransformer>([this])
 		Object.keys(this.transformers).forEach(key => {
 			const transformer = this.transformers[key]!
 			if ('call' in transformer) {
@@ -128,7 +124,7 @@ abstract class AbstractTransformer<
 	private onAfterTransform = () => {
 		// Was executed by parent, parent will restore
 		if (this.originalClearCacheOnTransform !== null) return
-		const visited = new Set<string>([this.signature])
+		const visited = new Set<AnyAbstractTransformer>([this])
 		Object.keys(this.transformers).forEach(key => {
 			const transformer = this.transformers[key]!
 			if ('call' in transformer) {
