@@ -27,16 +27,17 @@ abstract class AbstractTransformer<
 	Props extends Record<string, unknown> | undefined = undefined,
 	Includes extends keyof OnlyPossiblyUndefined<TOutput> = keyof OnlyPossiblyUndefined<TOutput>,
 > {
-	private readonly dropCacheOnTransform: boolean
+	protected clearCacheOnTransform: boolean
+	private readonly signature = crypto.randomUUID()
 
 	// MARK: Constructor
 	/**
 	 * Creates a new transformer instance.
 	 * @param params - Configuration options for the transformer.
-	 * @param params.dropCacheOnTransform - Whether to clear the cache after each transform call. Defaults to `true`.
+	 * @param params.clearCacheOnTransform - Whether to clear the cache after each transform call. Defaults to `true`.
 	 */
-	constructor(params?: { dropCacheOnTransform?: boolean }) {
-		this.dropCacheOnTransform = params?.dropCacheOnTransform ?? true
+	constructor(params?: { clearCacheOnTransform?: boolean }) {
+		this.clearCacheOnTransform = params?.clearCacheOnTransform ?? true
 	}
 
 	// MARK: Data
@@ -63,20 +64,49 @@ abstract class AbstractTransformer<
 
 	public clearCache = () => this._clearCache()
 
-	private _clearCache = (clearedFor: Set<AnyAbstractTransformer> = new Set()) => {
-		if (clearedFor.has(this)) return
+	private _clearCache = (clearedFor: Set<string> = new Set()) => {
+		if (clearedFor.has(this.signature)) return
 		Object.keys(this.cache).forEach(key => this.cache[key]?.clear())
-		clearedFor.add(this)
+		clearedFor.add(this.signature)
 		Object.keys(this.transformers).forEach(key => {
-			const transformer = this.transformers[key]
-			if (!transformer) return
+			const transformer = this.transformers[key]!
 			if ('call' in transformer) return transformer.call()._clearCache(clearedFor)
 			transformer._clearCache(clearedFor)
 		})
 	}
 
+	// Executed in child transformers to prevent them from clearing cache mid-transform
+	private disableClearCacheForTransformers = (visited: Set<string>) => {
+		if (visited.has(this.signature)) return // Already visited, prevent infinite loop
+		visited.add(this.signature)
+		this.clearCacheOnTransform = false
+		Object.keys(this.transformers).forEach(key => {
+			const transformer = this.transformers[key]!
+			if ('call' in transformer) {
+				transformer.call().disableClearCacheForTransformers(visited)
+			} else transformer.disableClearCacheForTransformers(visited)
+		})
+	}
+
 	// MARK: Transformer
 	transformers: Record<string, AnyAbstractTransformer | Cache<() => AnyAbstractTransformer>> = {}
+
+	private transformerBackup: Record<string, AnyAbstractTransformer | Cache<() => AnyAbstractTransformer>> = {}
+
+	private onBeforeTransform = () => {
+		this.transformerBackup = this.transformers
+		const set = new Set<string>([this.signature])
+		Object.keys(this.transformers).forEach(key => {
+			const transformer = this.transformers[key]!
+			if ('call' in transformer) {
+				transformer.call().disableClearCacheForTransformers(set)
+			} else transformer.disableClearCacheForTransformers(set)
+		})
+	}
+
+	private onAfterTransform = () => {
+		this.transformers = this.transformerBackup
+	}
 
 	/**
 	 * Transforms a single input object.
@@ -126,8 +156,10 @@ abstract class AbstractTransformer<
 	}): Promise<TOutput> {
 		const { input, props, includes, unsafeIncludes } = params
 		const combinedIncludes = [...(includes || []), ...(unsafeIncludes || [])]
-		const output = this.__transform(input, props, combinedIncludes)
-		if (this.dropCacheOnTransform) this.clearCache()
+		this.onBeforeTransform()
+		const output = await this.__transform(input, props, combinedIncludes)
+		if (this.clearCacheOnTransform) this.clearCache()
+		this.onAfterTransform()
 		return output
 	}
 
@@ -144,8 +176,10 @@ abstract class AbstractTransformer<
 	}): Promise<TOutput[]> {
 		const { inputs, props, includes, unsafeIncludes } = params
 		const combinedIncludes = [...(includes || []), ...(unsafeIncludes || [])]
-		const outputArray = Promise.all(inputs.map(input => this.__transform(input, props, combinedIncludes)))
-		if (this.dropCacheOnTransform) this.clearCache()
+		this.onBeforeTransform()
+		const outputArray = await Promise.all(inputs.map(input => this.__transform(input, props, combinedIncludes)))
+		if (this.clearCacheOnTransform) this.clearCache()
+		this.onAfterTransform()
 		return outputArray
 	}
 

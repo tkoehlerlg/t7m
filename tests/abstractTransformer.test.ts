@@ -354,12 +354,12 @@ describe('AbstractTransformer', () => {
 			expect(mockFetcher.getCallCount()).toBe(2)
 		})
 
-		it('should keep cache when dropCacheOnTransform is false', async () => {
+		it('should keep cache when clearCacheOnTransform is false', async () => {
 			const mockFetcher = createMockFetcher()
 
 			class PersistentCacheTransformer extends AbstractTransformer<User, PublicUser> {
 				constructor() {
-					super({ dropCacheOnTransform: false })
+					super({ clearCacheOnTransform: false })
 				}
 
 				cache = {
@@ -394,7 +394,7 @@ describe('AbstractTransformer', () => {
 
 			class PersistentCacheTransformer extends AbstractTransformer<User, PublicUser> {
 				constructor() {
-					super({ dropCacheOnTransform: false })
+					super({ clearCacheOnTransform: false })
 				}
 
 				cache = {

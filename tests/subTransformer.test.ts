@@ -90,7 +90,7 @@ describe('SubTransformer Tests', () => {
 		// Author transformer (leaf transformer - no dependencies)
 		class AuthorTransformer extends AbstractTransformer<Author, AuthorOutput> {
 			constructor() {
-				super({ dropCacheOnTransform: false })
+				super({ clearCacheOnTransform: false })
 			}
 
 			cache = {
@@ -112,7 +112,7 @@ describe('SubTransformer Tests', () => {
 			private authorTransformer = new AuthorTransformer()
 
 			constructor() {
-				super({ dropCacheOnTransform: false })
+				super({ clearCacheOnTransform: false })
 				this.transformers = {
 					author: this.authorTransformer,
 				}
@@ -180,7 +180,7 @@ describe('SubTransformer Tests', () => {
 	describe('Cache clearing propagation', () => {
 		class ChildTransformer extends AbstractTransformer<Author, AuthorOutput> {
 			constructor() {
-				super({ dropCacheOnTransform: false })
+				super({ clearCacheOnTransform: false })
 			}
 
 			cache = {
@@ -198,7 +198,7 @@ describe('SubTransformer Tests', () => {
 			childTransformer = new ChildTransformer()
 
 			constructor() {
-				super({ dropCacheOnTransform: false })
+				super({ clearCacheOnTransform: false })
 				this.transformers = {
 					child: this.childTransformer,
 				}
@@ -272,7 +272,7 @@ describe('SubTransformer Tests', () => {
 				postTransformer: AbstractTransformer<Post, PostOutput> | null = null
 
 				constructor() {
-					super({ dropCacheOnTransform: false })
+					super({ clearCacheOnTransform: false })
 				}
 
 				setPostTransformer(transformer: AbstractTransformer<Post, PostOutput>) {
@@ -301,7 +301,7 @@ describe('SubTransformer Tests', () => {
 				authorTransformer: CircularAuthorTransformer | null = null
 
 				constructor() {
-					super({ dropCacheOnTransform: false })
+					super({ clearCacheOnTransform: false })
 				}
 
 				setAuthorTransformer(transformer: CircularAuthorTransformer) {
@@ -397,7 +397,7 @@ describe('SubTransformer Tests', () => {
 		// Comment -> Post -> Author (3 levels deep)
 		class DeepAuthorTransformer extends AbstractTransformer<Author, AuthorOutput> {
 			constructor() {
-				super({ dropCacheOnTransform: false })
+				super({ clearCacheOnTransform: false })
 			}
 
 			cache = {}
@@ -413,7 +413,7 @@ describe('SubTransformer Tests', () => {
 			authorTransformer = new DeepAuthorTransformer()
 
 			constructor() {
-				super({ dropCacheOnTransform: false })
+				super({ clearCacheOnTransform: false })
 				this.transformers = { author: this.authorTransformer }
 			}
 
@@ -441,7 +441,7 @@ describe('SubTransformer Tests', () => {
 			postTransformer = new DeepPostTransformer()
 
 			constructor() {
-				super({ dropCacheOnTransform: false })
+				super({ clearCacheOnTransform: false })
 				this.transformers = { post: this.postTransformer }
 			}
 
@@ -501,7 +501,7 @@ describe('SubTransformer Tests', () => {
 				postTransformer = new DeepPostTransformer()
 
 				constructor() {
-					super({ dropCacheOnTransform: false })
+					super({ clearCacheOnTransform: false })
 					this.transformers = { post: this.postTransformer }
 				}
 
@@ -570,10 +570,10 @@ describe('SubTransformer Tests', () => {
 		})
 	})
 
-	describe('dropCacheOnTransform with nested transformers', () => {
+	describe('clearCacheOnTransform with nested transformers', () => {
 		class AutoClearChildTransformer extends AbstractTransformer<Author, AuthorOutput> {
 			constructor() {
-				super({ dropCacheOnTransform: false })
+				super({ clearCacheOnTransform: false })
 			}
 
 			cache = {
@@ -591,7 +591,7 @@ describe('SubTransformer Tests', () => {
 			childTransformer = new AutoClearChildTransformer()
 
 			constructor(dropCache: boolean) {
-				super({ dropCacheOnTransform: dropCache })
+				super({ clearCacheOnTransform: dropCache })
 				this.transformers = { child: this.childTransformer }
 			}
 
@@ -612,14 +612,14 @@ describe('SubTransformer Tests', () => {
 			}
 		}
 
-		it('should clear child caches when parent has dropCacheOnTransform=true', async () => {
+		it('should clear child caches when parent has clearCacheOnTransform=true', async () => {
 			resetFetchCounts()
 			const parent = new AutoClearParentTransformer(true)
 
 			// Populate child cache manually
 			await parent.childTransformer.cache.data.call(1)
 
-			// Use _transform which triggers dropCacheOnTransform
+			// Use _transform which triggers clearCacheOnTransform
 			await parent._transform({
 				input: posts[0]!,
 				props: undefined,
@@ -636,7 +636,7 @@ describe('SubTransformer Tests', () => {
 			expect(childCacheSizeBefore).toBe(0) // Cache was cleared
 		})
 
-		it('should NOT clear child caches when parent has dropCacheOnTransform=false', async () => {
+		it('should NOT clear child caches when parent has clearCacheOnTransform=false', async () => {
 			resetFetchCounts()
 			const parent = new AutoClearParentTransformer(false)
 
@@ -672,7 +672,7 @@ describe('SubTransformer Tests', () => {
 
 		class AuthorTransformer extends AbstractTransformer<Author, AuthorOutput> {
 			constructor() {
-				super({ dropCacheOnTransform: false })
+				super({ clearCacheOnTransform: false })
 				transformerCreationCount++
 			}
 
@@ -683,7 +683,7 @@ describe('SubTransformer Tests', () => {
 
 		class PostWithLazyAuthorTransformer extends AbstractTransformer<Post, PostOutput> {
 			constructor() {
-				super({ dropCacheOnTransform: false })
+				super({ clearCacheOnTransform: false })
 			}
 
 			cache = {
@@ -742,6 +742,122 @@ describe('SubTransformer Tests', () => {
 			await postTransformer.transform({ input: posts[0]!, includes: ['author'] })
 			expect(transformerCreationCount).toBe(1) // Still same transformer
 			expect(authorFetchCount).toBe(2) // Data was re-fetched
+		})
+	})
+
+	describe('Cache clearing timing - parent clears only after transform completes', () => {
+		const clearLog: string[] = []
+
+		const resetClearLog = () => {
+			clearLog.length = 0
+		}
+
+		class TrackedChildTransformer extends AbstractTransformer<Author, AuthorOutput> {
+			name: string
+
+			constructor(name: string) {
+				super({ clearCacheOnTransform: true }) // Child has auto-clear enabled
+				this.name = name
+			}
+
+			cache = {
+				data: new Cache(async (id: number) => ({ id, fetched: true })),
+			}
+
+			// Override clearCache to track when it's called
+			clearCache = () => {
+				clearLog.push(`${this.name}:clear`)
+				this.cache.data.clear()
+			}
+
+			data(input: Author): AuthorOutput {
+				clearLog.push(`${this.name}:data`)
+				return { id: input.id, name: input.name }
+			}
+		}
+
+		class TrackedParentTransformer extends AbstractTransformer<Post, PostOutput> {
+			childTransformer = new TrackedChildTransformer('child')
+
+			constructor() {
+				super({ clearCacheOnTransform: true }) // Parent has auto-clear enabled
+				this.transformers = { child: this.childTransformer }
+			}
+
+			cache = {
+				author: new Cache(fetchAuthorById),
+			}
+
+			// Override clearCache to track when it's called
+			clearCache = () => {
+				clearLog.push('parent:clear')
+				this.cache.author.clear()
+				this.childTransformer.clearCache()
+			}
+
+			data(input: Post): PostOutput {
+				clearLog.push('parent:data')
+				return { id: input.id, title: input.title }
+			}
+
+			includesMap = {
+				author: async (input: Post) => {
+					const author = await this.cache.author.call(input.authorId)
+					if (!author) return undefined
+					// Child transform happens during parent's include resolution
+					return this.childTransformer._transform({ input: author, props: undefined })
+				},
+			}
+		}
+
+		it('should only clear cache after parent transform completes, not during child transforms', async () => {
+			resetClearLog()
+			resetFetchCounts()
+			const parent = new TrackedParentTransformer()
+
+			await parent._transform({
+				input: posts[0]!,
+				props: undefined,
+				includes: ['author'],
+			})
+
+			// Expected order:
+			// 1. parent:data - parent's data() runs
+			// 2. child:data - child's data() runs during include resolution
+			// 3. parent:clear - ONLY parent clears at the end (which cascades to child)
+			// 4. child:clear - triggered by parent's clearCache cascade
+
+			expect(clearLog).toEqual([
+				'parent:data',
+				'child:data',
+				'parent:clear',
+				'child:clear',
+			])
+
+			// Verify child did NOT clear in the middle (no 'child:clear' between data calls)
+			const childDataIndex = clearLog.indexOf('child:data')
+			const parentClearIndex = clearLog.indexOf('parent:clear')
+			expect(childDataIndex).toBeLessThan(parentClearIndex)
+		})
+
+		it('should preserve cache during nested transforms so data is shared', async () => {
+			resetClearLog()
+			resetFetchCounts()
+			const parent = new TrackedParentTransformer()
+
+			// Pre-populate child cache
+			await parent.childTransformer.cache.data.call(1)
+
+			// Transform - child should use cached data during parent's transform
+			await parent._transform({
+				input: posts[0]!,
+				props: undefined,
+				includes: ['author'],
+			})
+
+			// Cache was available during transform, cleared only at end
+			expect(clearLog.filter(log => log === 'child:clear').length).toBe(1)
+			expect(clearLog.indexOf('child:clear')).toBeGreaterThan(clearLog.indexOf('child:data'))
 		})
 	})
 })
