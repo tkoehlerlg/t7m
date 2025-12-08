@@ -234,8 +234,24 @@ By default, caches clear after each `transform`/`transformMany` call. Disable wi
 ```typescript
 class MyTransformer extends AbstractTransformer<Input, Output> {
   constructor() {
-    super({ dropCacheOnTransform: false });
+    super({ clearCacheOnTransform: false });
   }
+}
+```
+
+### Nested Transformer Cache Clearing
+
+Register nested transformers in `transformers` for cache clearing propagation. Parent clears all caches only after transformation completes—handled internally:
+
+```typescript
+class PostTransformer extends AbstractTransformer<Post, PublicPost> {
+  authorTransformer = new AuthorTransformer();
+
+  transformers = { author: this.authorTransformer };
+
+  includesMap = {
+    author: async (input) => this.authorTransformer.transform({ input: await getAuthor(input.authorId) }),
+  };
 }
 ```
 
