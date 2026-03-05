@@ -1,8 +1,8 @@
 import { createMiddleware } from 'hono/factory'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import type { AnyAbstractTransformer } from '../abstractTransformer'
-import { log } from '../log'
-import type { IncludesOf, InputOf, OutputOf, PropsOf } from '../typeHelper'
+import { log } from '../lib/log'
+import type { IncludesOf, InputOf, OutputOf, PropsOf } from '../types'
 import type { HeaderRecord, JSONRespondReturn } from './types'
 
 export const t7mMiddleware = createMiddleware(async (c, next) => {

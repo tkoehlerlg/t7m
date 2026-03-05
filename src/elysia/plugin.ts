@@ -1,7 +1,7 @@
 import Elysia from 'elysia'
 import type { AnyAbstractTransformer } from '../abstractTransformer'
-import { log } from '../log'
-import type { IncludesOf, OutputOf, PropsOf } from '../typeHelper'
+import { log } from '../lib/log'
+import type { IncludesOf, OutputOf, PropsOf } from '../types'
 import type { TransformFn, TransformManyFn } from './types'
 
 export const t7mPlugin = () =>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { Cache } from '../src/cache'
+import { Cache } from '../src/lib/cache'
 
 describe('Cache edge cases', () => {
 	describe('Rejected promise caching', () => {

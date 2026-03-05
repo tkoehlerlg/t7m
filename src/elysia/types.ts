@@ -1,5 +1,5 @@
 import type { AnyAbstractTransformer } from '../abstractTransformer'
-import type { IncludesOf, InputOf, OutputOf, PropsOf } from '../typeHelper'
+import type { IncludesOf, InputOf, OutputOf, PropsOf } from '../types'
 
 type Extras<T extends AnyAbstractTransformer, O> = {
 	includes?: IncludesOf<T>[]

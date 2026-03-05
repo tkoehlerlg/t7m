@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { Semaphore } from '../src/semaphore'
+import { Semaphore } from '../src/lib/semaphore'
 
 describe('Semaphore', () => {
 	it('should limit concurrency to the specified value', async () => {

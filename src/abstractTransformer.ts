@@ -1,6 +1,6 @@
-import type { AnyCache, Cache } from './cache'
-import { Semaphore } from './semaphore'
-import type { OnlyPossiblyUndefined } from './types'
+import type { AnyCache, Cache } from './lib/cache'
+import { Semaphore } from './lib/semaphore'
+import type { OnlyPossiblyUndefined } from './lib/types'
 
 /**
  * Include function type.
