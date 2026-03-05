@@ -18,7 +18,6 @@ const log = (message: string, data?: unknown, transformerName?: string) => {
 
 export const t7mMiddleware = createMiddleware(async (c, next) => {
 	const { include } = c.req.query()
-	const { include: includues } = c.req.queries()
 
 	c.transform = async function <
 		T extends AnyAbstractTransformer,
@@ -37,7 +36,7 @@ export const t7mMiddleware = createMiddleware(async (c, next) => {
 	): Promise<JSONRespondReturn<O, U>> {
 		const { includes, wrapper, debug, props } = extras
 		if (debug) log('Transforming (One):\n', input, transformer.constructor.name)
-		const processedIncludes = includes || includues || include?.split(',')
+		const processedIncludes = includes || include?.split(',')
 		if (debug && processedIncludes) log('Includes Received:', processedIncludes, transformer.constructor.name)
 		const transformed: OutputOf<T> = await transformer._transform({
 			input,
