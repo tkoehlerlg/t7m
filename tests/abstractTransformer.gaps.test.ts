@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { describe, expect, it } from 'bun:test'
 import { AbstractTransformer } from '../src/abstractTransformer'
 import { Cache } from '../src/lib/cache'

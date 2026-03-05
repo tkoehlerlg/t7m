@@ -1,5 +1,4 @@
 // Type-level tests for AbstractTransformer
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { AbstractTransformer, IncludesOf, InputOf, OutputOf, PropsOf } from '../src'
 

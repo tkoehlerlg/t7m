@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { describe, expect, it } from 'bun:test'
 import { AbstractTransformer } from '../src/abstractTransformer'
 
@@ -230,7 +227,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
 			}
 
 			// Should not throw when includes aren't used
-			expect(() => {
+			await expect(
 				transformer.transform({
 					input: problematicInput,
 					props: {
@@ -239,7 +236,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
 						enrichmentLevel: 1,
 					},
 				})
-			}).not.toThrow()
+			).resolves.toBeDefined()
 
 			// Should throw when problematic includes are used
 			await expect(
