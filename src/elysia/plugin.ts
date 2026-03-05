@@ -22,7 +22,7 @@ export const t7mPlugin = () =>
 			const [input, transformer, extras] = args
 			const { includes, wrapper, debug, props } = extras ?? {}
 			if (debug) log('Transforming (One):\n', input, transformer.constructor.name)
-			const processedIncludes = includes || include?.split(',')
+			const processedIncludes = includes || include?.split(',').map(s => s.trim())
 			if (debug && processedIncludes) log('Includes Received:', processedIncludes, transformer.constructor.name)
 			const transformed: OutputOf<T> = await transformer._transform({
 				input,
@@ -49,7 +49,7 @@ export const t7mPlugin = () =>
 			const [inputs, transformer, extras] = args
 			const { includes, wrapper, debug, props } = extras ?? {}
 			if (debug) log('Transforming (Many):\n', inputs, transformer.constructor.name)
-			const processedIncludes = includes || include?.split(',')
+			const processedIncludes = includes || include?.split(',').map(s => s.trim())
 			if (debug && processedIncludes) log('Includes Received:', processedIncludes, transformer.constructor.name)
 			const transformed: OutputOf<T>[] = await transformer._transformMany({
 				inputs,

@@ -25,7 +25,7 @@ export const t7mMiddleware = createMiddleware(async (c, next) => {
 	): Promise<JSONRespondReturn<O, U>> {
 		const { includes, wrapper, debug, props } = extras
 		if (debug) log('Transforming (One):\n', input, transformer.constructor.name)
-		const processedIncludes = includes || include?.split(',')
+		const processedIncludes = includes || include?.split(',').map(s => s.trim())
 		if (debug && processedIncludes) log('Includes Received:', processedIncludes, transformer.constructor.name)
 		const transformed: OutputOf<T> = await transformer._transform({
 			input,
@@ -55,7 +55,7 @@ export const t7mMiddleware = createMiddleware(async (c, next) => {
 	): Promise<JSONRespondReturn<O, U>> {
 		const { includes, wrapper, debug, props } = extras
 		if (debug) log('Transforming (Many):\n', inputs, transformer.constructor.name)
-		const processedIncludes = includes || include?.split(',')
+		const processedIncludes = includes || include?.split(',').map(s => s.trim())
 		if (debug && processedIncludes) log('Includes Received:', processedIncludes, transformer.constructor.name)
 		const transformed: OutputOf<T>[] = await transformer._transformMany({
 			inputs,
