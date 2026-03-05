@@ -6,7 +6,7 @@
 		"name": "Torben Koehler"
 	},
 	"license": "MIT-NSR",
-	"version": "0.6.5",
+	"version": "0.6.6",
 	"description": "Transformer for Elysia and Hono",
 	"repository": {
 		"type": "git",
@@ -30,11 +30,15 @@
 	},
 	"typesVersions": {
 		"*": {
-			"hono": ["./dist/hono/index.d.ts"]
+			"hono": [
+				"./dist/hono/index.d.ts"
+			]
 		}
 	},
 	"types": "dist/index.d.ts",
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"scripts": {
 		"build": "tsc --declaration --emitDeclarationOnly --outDir dist && NODE_ENV=production bun build src/index.ts src/hono/index.ts --outdir dist --target node --external hono",
 		"dev": "bun --watch src/index.ts",
