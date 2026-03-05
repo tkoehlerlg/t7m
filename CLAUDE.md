@@ -55,7 +55,8 @@ dist/                          # Build output (git-ignored)
 ### 1. `transform()` vs `_transform()`
 
 - `transform()` / `transformMany()`: Public API. Props conditionally required.
-- `_transform()` / `_transformMany()`: Used by Hono middleware and Elysia plugin. Props always required. Handles cache lifecycle.
+- `_transform()` / `_transformMany()`: Used by Hono middleware and Elysia plugin. Props always required.
+- Both APIs manage cache lifecycle (activeTransforms counter + clearCacheOnTransform).
 - Don't confuse them — both Hono middleware and Elysia plugin call `_transform()`, not `transform()`.
 
 ### 2. All transform methods take a params OBJECT
@@ -100,7 +101,7 @@ constructor() {
   super({ clearCacheOnTransform: false })
 }
 
-// ❌ WRONG
+// ❌ WRONG — Cache options are { on?, maxSize? }, not clearCacheOnTransform
 new Cache(fn, { clearCacheOnTransform: false })
 ```
 
