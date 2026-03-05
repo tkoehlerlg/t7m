@@ -226,8 +226,7 @@ describe('Cache edge cases', () => {
 				callCount++
 				return `value-${key}`
 			}
-			const cache = new Cache(fn)
-			cache.maxSize = 3
+			const cache = new Cache(fn, { maxSize: 3 })
 
 			await cache.call('a')
 			await cache.call('b')
@@ -254,8 +253,7 @@ describe('Cache edge cases', () => {
 				callCount++
 				return key * 10
 			}
-			const cache = new Cache(fn)
-			cache.maxSize = 1
+			const cache = new Cache(fn, { maxSize: 1 })
 
 			await cache.call(1)
 			expect(callCount).toBe(1)
@@ -295,60 +293,56 @@ describe('Cache edge cases', () => {
 		})
 	})
 
-	describe('maxSize edge cases (0 and negative)', () => {
-		it('should treat maxSize=0 as unlimited (no eviction)', async () => {
-			let callCount = 0
-			const fn = async (key: string) => {
-				callCount++
-				return `value-${key}`
-			}
-			const cache = new Cache(fn)
-			cache.maxSize = 0
-
-			await cache.call('a')
-			await cache.call('b')
-			await cache.call('c')
-			expect(callCount).toBe(3)
-
-			// All should still be cached
-			await cache.call('a')
-			await cache.call('b')
-			await cache.call('c')
-			expect(callCount).toBe(3)
+	describe('maxSize constructor validation', () => {
+		it('should throw for maxSize = 0', () => {
+			const fn = async (key: string) => key
+			expect(() => new Cache(fn, { maxSize: 0 })).toThrow('positive integer')
 		})
 
-		it('should evict immediately with negative maxSize (every insert exceeds limit)', async () => {
-			let callCount = 0
-			const fn = async (key: string) => {
-				callCount++
-				return `value-${key}`
-			}
-			const cache = new Cache(fn)
-			cache.maxSize = -1
-
-			// First call: inserts then immediately evicts (cache.size 1 > -1)
-			await cache.call('a')
-			expect(callCount).toBe(1)
-
-			// Second call to same key: cache miss because entry was evicted
-			await cache.call('a')
-			expect(callCount).toBe(2)
+		it('should throw for negative maxSize', () => {
+			const fn = async (key: string) => key
+			expect(() => new Cache(fn, { maxSize: -1 })).toThrow('positive integer')
 		})
 
-		it('should still return cached results with maxSize=0', async () => {
-			let callCount = 0
-			const fn = async (n: number) => {
-				callCount++
-				return n * 10
-			}
-			const cache = new Cache(fn)
-			cache.maxSize = 0
+		it('should throw for non-integer maxSize', () => {
+			const fn = async (key: string) => key
+			expect(() => new Cache(fn, { maxSize: 1.5 })).toThrow('positive integer')
+		})
 
-			const r1 = await cache.call(5)
-			const r2 = await cache.call(5)
-			expect(r1).toBe(50)
-			expect(r2).toBe(50)
+		it('should throw for NaN maxSize', () => {
+			const fn = async (key: string) => key
+			expect(() => new Cache(fn, { maxSize: NaN })).toThrow('positive integer')
+		})
+
+		it('should throw for Infinity maxSize', () => {
+			const fn = async (key: string) => key
+			expect(() => new Cache(fn, { maxSize: Infinity })).toThrow('positive integer')
+		})
+
+		it('should accept valid positive integer maxSize', () => {
+			const fn = async (key: string) => key
+			expect(() => new Cache(fn, { maxSize: 1 })).not.toThrow()
+			expect(() => new Cache(fn, { maxSize: 100 })).not.toThrow()
+		})
+
+		it('should work with on and maxSize combined', async () => {
+			let callCount = 0
+			const fn = async (obj: { id: number; ts: number }) => {
+				callCount++
+				return obj.id
+			}
+			const cache = new Cache(fn, { on: ['id'], maxSize: 2 })
+
+			await cache.call({ id: 1, ts: 100 })
+			await cache.call({ id: 1, ts: 200 }) // cache hit (on: ['id'])
 			expect(callCount).toBe(1)
+
+			await cache.call({ id: 2, ts: 300 })
+			await cache.call({ id: 3, ts: 400 }) // evicts id:1 (maxSize: 2)
+			expect(callCount).toBe(3)
+
+			await cache.call({ id: 1, ts: 500 }) // cache miss (evicted)
+			expect(callCount).toBe(4)
 		})
 	})
 

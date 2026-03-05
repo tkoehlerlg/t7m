@@ -210,7 +210,7 @@ describe('Cache', () => {
 	describe('Object arguments with on parameter', () => {
 		it('should use only specified keys with on parameter', async () => {
 			const mock = createMockFn((obj: { id: number; name: string; timestamp: number }) => obj.id)
-			const cache = new Cache(mock.fn, 'id')
+			const cache = new Cache(mock.fn, { on: ['id'] })
 
 			const result1 = await cache.call({ id: 1, name: 'test', timestamp: 100 })
 			const result2 = await cache.call({ id: 1, name: 'test', timestamp: 200 })
@@ -222,7 +222,7 @@ describe('Cache', () => {
 
 		it('should ignore non-specified keys with on parameter', async () => {
 			const mock = createMockFn((obj: { id: number; name: string; extra: string }) => `${obj.id}-${obj.name}`)
-			const cache = new Cache(mock.fn, 'id', 'name')
+			const cache = new Cache(mock.fn, { on: ['id', 'name'] })
 
 			await cache.call({ id: 1, name: 'test', extra: 'a' })
 			await cache.call({ id: 1, name: 'test', extra: 'b' })
@@ -298,7 +298,7 @@ describe('Cache', () => {
 
 		it('should be fast for object lookups', async () => {
 			const mock = createMockFn((obj: { id: number; name: string }) => obj.id)
-			const cache = new Cache(mock.fn, 'id', 'name')
+			const cache = new Cache(mock.fn, { on: ['id', 'name'] })
 			const iterations = 10000
 
 			// Warm up cache
