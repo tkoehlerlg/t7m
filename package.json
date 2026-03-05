@@ -62,7 +62,7 @@
 	"peerDependencies": {
 		"typescript": "^5",
 		"elysia": "^1.2",
-		"hono": ""
+		"hono": "^4"
 	},
 	"peerDependenciesMeta": {
 		"elysia": {
