@@ -36,10 +36,17 @@ abstract class AbstractTransformer<
 	 * Creates a new transformer instance.
 	 * @param params - Configuration options for the transformer.
 	 * @param params.clearCacheOnTransform - Whether to clear the cache after each transform call. Defaults to `true`.
+	 * @param params.concurrency - Maximum number of items to process in parallel in `transformMany` / `_transformMany`. Defaults to unlimited. Does not apply to single-item `transform` / `_transform`.
 	 */
 	constructor(params?: { clearCacheOnTransform?: boolean; concurrency?: number }) {
 		this.clearCacheOnTransform = params?.clearCacheOnTransform ?? true
-		if (params?.concurrency !== undefined) this.semaphore = new Semaphore(params.concurrency)
+		if (params?.concurrency !== undefined) {
+			try {
+				this.semaphore = new Semaphore(params.concurrency)
+			} catch {
+				throw new Error(`[T7M] concurrency must be a positive integer, got ${params.concurrency}`)
+			}
+		}
 	}
 
 	// MARK: Data
@@ -61,6 +68,18 @@ abstract class AbstractTransformer<
 		[K in Includes]: IncludeFunction<TInput, TOutput, K, Props>
 	}> = {}
 
+	/**
+	 * Concurrency limits for individual include functions.
+	 * When set, limits the number of concurrent invocations of a specific include function across all items.
+	 * Include keys not listed here remain unlimited.
+	 * @example
+	 * ```ts
+	 * protected readonly includesConcurrency = {
+	 *   posts: 3,   // max 3 concurrent 'posts' include calls
+	 *   avatar: 2,  // max 2 concurrent 'avatar' include calls
+	 * }
+	 * ```
+	 */
 	protected readonly includesConcurrency: Partial<{
 		[K in Includes]: number
 	}> = {}
@@ -72,7 +91,15 @@ abstract class AbstractTransformer<
 			this._includeSemaphores = {} as Partial<Record<Includes, Semaphore>>
 			for (const key of Object.keys(this.includesConcurrency) as Includes[]) {
 				const limit = this.includesConcurrency[key]
-				if (limit !== undefined) this._includeSemaphores[key] = new Semaphore(limit)
+				if (limit !== undefined) {
+					try {
+						this._includeSemaphores[key] = new Semaphore(limit)
+					} catch {
+						throw new Error(
+							`[T7M] includesConcurrency limit for '${String(key)}' must be a positive integer, got ${limit}`
+						)
+					}
+				}
 			}
 		}
 		return this._includeSemaphores

@@ -52,8 +52,14 @@ describe('Semaphore', () => {
 	})
 
 	it('should throw for limit less than 1', () => {
-		expect(() => new Semaphore(0)).toThrow('Semaphore limit must be at least 1')
-		expect(() => new Semaphore(-1)).toThrow('Semaphore limit must be at least 1')
+		expect(() => new Semaphore(0)).toThrow('Semaphore limit must be a positive integer')
+		expect(() => new Semaphore(-1)).toThrow('Semaphore limit must be a positive integer')
+	})
+
+	it('should throw for non-integer limit', () => {
+		expect(() => new Semaphore(1.5)).toThrow('Semaphore limit must be a positive integer')
+		expect(() => new Semaphore(NaN)).toThrow('Semaphore limit must be a positive integer')
+		expect(() => new Semaphore(Infinity)).toThrow('Semaphore limit must be a positive integer')
 	})
 
 	it('should handle synchronous return values', async () => {

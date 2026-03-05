@@ -234,5 +234,107 @@ describe('Concurrency - per-include throttle', () => {
 		expect(results).toHaveLength(10)
 		expect(maxItemActive).toBeLessThanOrEqual(3)
 		expect(maxIncludeActive).toBeLessThanOrEqual(2)
+		expect(maxItemActive).toBeGreaterThan(1) // actually ran items in parallel
+		expect(maxIncludeActive).toBeGreaterThan(1) // actually ran includes in parallel
+	})
+})
+
+describe('Concurrency - error handling', () => {
+	it('should release semaphore slot when data() throws', async () => {
+		let active = 0
+		let maxActive = 0
+
+		class ErrorTransformer extends AbstractTransformer<Item, ItemOutput> {
+			constructor() {
+				super({ concurrency: 2 })
+			}
+
+			async data(input: Item): Promise<ItemOutput> {
+				active++
+				maxActive = Math.max(maxActive, active)
+				await new Promise(r => setTimeout(r, 10))
+				active--
+				if (input.id === 3) throw new Error('data error')
+				return { id: input.id }
+			}
+		}
+
+		const transformer = new ErrorTransformer()
+		const inputs = Array.from({ length: 6 }, (_, i) => ({ id: i }))
+
+		await expect(transformer.transformMany({ inputs })).rejects.toThrow('data error')
+		expect(maxActive).toBeLessThanOrEqual(2)
+	})
+
+	it('should release include semaphore slot when include throws', async () => {
+		let active = 0
+		let maxActive = 0
+
+		class IncludeErrorTransformer extends AbstractTransformer<Item, ItemOutput> {
+			data(input: Item): ItemOutput {
+				return { id: input.id }
+			}
+
+			includesMap = {
+				resolved: async (input: Item) => {
+					active++
+					maxActive = Math.max(maxActive, active)
+					await new Promise(r => setTimeout(r, 10))
+					active--
+					if (input.id === 2) throw new Error('include error')
+					return `resolved-${input.id}`
+				},
+			}
+
+			includesConcurrency = {
+				resolved: 1,
+			}
+		}
+
+		const transformer = new IncludeErrorTransformer()
+		const inputs = Array.from({ length: 4 }, (_, i) => ({ id: i }))
+
+		await expect(transformer.transformMany({ inputs, includes: ['resolved'] })).rejects.toThrow('include error')
+		expect(maxActive).toBeLessThanOrEqual(1)
+	})
+})
+
+describe('Concurrency - validation', () => {
+	it('should throw for invalid concurrency values', () => {
+		expect(() => {
+			class Bad extends AbstractTransformer<Item, ItemOutput> {
+				constructor() {
+					super({ concurrency: 0 })
+				}
+				data(input: Item): ItemOutput {
+					return { id: input.id }
+				}
+			}
+			new Bad()
+		}).toThrow()
+
+		expect(() => {
+			class Bad extends AbstractTransformer<Item, ItemOutput> {
+				constructor() {
+					super({ concurrency: -1 })
+				}
+				data(input: Item): ItemOutput {
+					return { id: input.id }
+				}
+			}
+			new Bad()
+		}).toThrow()
+
+		expect(() => {
+			class Bad extends AbstractTransformer<Item, ItemOutput> {
+				constructor() {
+					super({ concurrency: 1.5 })
+				}
+				data(input: Item): ItemOutput {
+					return { id: input.id }
+				}
+			}
+			new Bad()
+		}).toThrow()
 	})
 })
