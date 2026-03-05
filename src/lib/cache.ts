@@ -25,6 +25,12 @@ class Cache<FN extends (() => any) | ((arg: any) => any)> {
 	private readonly cacheOnObjectParams?: (keyof Parameters<FN>[0])[]
 
 	/**
+	 * Optional maximum cache size. When set, the oldest entry (by insertion order) is evicted
+	 * once the cache exceeds this limit. Unset means unlimited growth (default).
+	 */
+	maxSize?: number
+
+	/**
 	 * Creates a new Cache instance.
 	 * @param fn - The function to cache
 	 * @param on - For object args: keys to use for cache key (default: all keys)
@@ -42,8 +48,8 @@ class Cache<FN extends (() => any) | ((arg: any) => any)> {
 		return keys
 			.slice()
 			.sort()
-			.map(key => `${key.toString()}:${arg[key]}`)
-			.join('-')
+			.map(key => `${key.toString()}:${JSON.stringify(arg[key])}`)
+			.join('|')
 	}
 
 	/**
@@ -55,7 +61,7 @@ class Cache<FN extends (() => any) | ((arg: any) => any)> {
 		const arg = args[0] ?? 'default-key'
 		let cacheKey: string
 		if (typeof arg !== 'object') {
-			cacheKey = arg.toString()
+			cacheKey = `${typeof arg}:${String(arg)}`
 		} else if (this.cacheOnObjectParams) {
 			cacheKey = this.objectCacheKey(this.cacheOnObjectParams, arg)
 		} else {
@@ -64,6 +70,20 @@ class Cache<FN extends (() => any) | ((arg: any) => any)> {
 		if (!this.cache.has(cacheKey)) {
 			const result = (this.fn as (...args: Parameters<FN>) => ReturnType<FN>)(...args)
 			this.cache.set(cacheKey, result as ReturnType<FN>)
+
+			// Evict oldest entry when maxSize is exceeded
+			if (this.maxSize && this.cache.size > this.maxSize) {
+				const firstKey = this.cache.keys().next().value
+				if (firstKey !== undefined) this.cache.delete(firstKey)
+			}
+
+			// Auto-evict rejected promises so transient failures don't become permanent
+			// biome-ignore lint/suspicious/noExplicitAny: need to check if result is thenable
+			if (result && typeof (result as any).catch === 'function') {
+				;(result as Promise<unknown>).catch(() => {
+					this.cache.delete(cacheKey)
+				})
+			}
 		}
 		return this.cache.get(cacheKey) as ReturnType<FN>
 	}
