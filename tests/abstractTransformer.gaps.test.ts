@@ -367,9 +367,7 @@ describe('AbstractTransformer - Gap Coverage', () => {
 
 			const transformer = new FailingDataTransformer()
 
-			await expect(
-				transformer.transform({ input: testItem })
-			).rejects.toThrow('Database connection failed')
+			await expect(transformer.transform({ input: testItem })).rejects.toThrow('Database connection failed')
 		})
 
 		it('should propagate a rejected promise from data() in transformMany', async () => {
@@ -383,9 +381,7 @@ describe('AbstractTransformer - Gap Coverage', () => {
 
 			const transformer = new FailingDataTransformer()
 
-			await expect(
-				transformer.transformMany({ inputs: testItems })
-			).rejects.toThrow('Service unavailable')
+			await expect(transformer.transformMany({ inputs: testItems })).rejects.toThrow('Service unavailable')
 		})
 
 		it('should propagate a rejected promise from data() in _transform', async () => {
@@ -399,9 +395,9 @@ describe('AbstractTransformer - Gap Coverage', () => {
 
 			const transformer = new FailingDataTransformer()
 
-			await expect(
-				transformer._transform({ input: testItem, props: undefined })
-			).rejects.toThrow('Unexpected failure')
+			await expect(transformer._transform({ input: testItem, props: undefined })).rejects.toThrow(
+				'Unexpected failure'
+			)
 		})
 
 		it('should propagate a rejected promise from data() in _transformMany', async () => {
@@ -415,9 +411,9 @@ describe('AbstractTransformer - Gap Coverage', () => {
 
 			const transformer = new FailingDataTransformer()
 
-			await expect(
-				transformer._transformMany({ inputs: testItems, props: undefined })
-			).rejects.toThrow('Batch failure')
+			await expect(transformer._transformMany({ inputs: testItems, props: undefined })).rejects.toThrow(
+				'Batch failure'
+			)
 		})
 	})
 
@@ -427,7 +423,9 @@ describe('AbstractTransformer - Gap Coverage', () => {
 		it('should skip includes when data() returns null', async () => {
 			let includeWasCalled = false
 
+			// biome-ignore lint/suspicious/noExplicitAny: testing edge case with null return
 			class NullDataTransformer extends AbstractTransformer<Item, any> {
+				// biome-ignore lint/suspicious/noExplicitAny: testing edge case with null return
 				data(_input: Item): any {
 					return null
 				}
@@ -443,6 +441,7 @@ describe('AbstractTransformer - Gap Coverage', () => {
 			const transformer = new NullDataTransformer()
 			const result = await transformer.transform({
 				input: testItem,
+				// biome-ignore lint/suspicious/noExplicitAny: testing edge case
 				includes: ['tags'] as any,
 			})
 
@@ -453,7 +452,9 @@ describe('AbstractTransformer - Gap Coverage', () => {
 		it('should skip includes when data() returns a non-object primitive', async () => {
 			let includeWasCalled = false
 
+			// biome-ignore lint/suspicious/noExplicitAny: testing edge case with primitive return
 			class PrimitiveDataTransformer extends AbstractTransformer<Item, any> {
+				// biome-ignore lint/suspicious/noExplicitAny: testing edge case with primitive return
 				data(_input: Item): any {
 					return 42
 				}
@@ -469,6 +470,7 @@ describe('AbstractTransformer - Gap Coverage', () => {
 			const transformer = new PrimitiveDataTransformer()
 			const result = await transformer.transform({
 				input: testItem,
+				// biome-ignore lint/suspicious/noExplicitAny: testing edge case
 				includes: ['tags'] as any,
 			})
 
@@ -495,9 +497,9 @@ describe('AbstractTransformer - Gap Coverage', () => {
 
 			const transformer = new StringThrowTransformer()
 
-			await expect(
-				transformer.transform({ input: testItem, includes: ['tags'] })
-			).rejects.toThrow("[T7M] Error in include function 'tags': something went wrong")
+			await expect(transformer.transform({ input: testItem, includes: ['tags'] })).rejects.toThrow(
+				"[T7M] Error in include function 'tags': something went wrong"
+			)
 		})
 
 		it('should wrap a thrown number in the error message', async () => {
@@ -515,9 +517,9 @@ describe('AbstractTransformer - Gap Coverage', () => {
 
 			const transformer = new NumberThrowTransformer()
 
-			await expect(
-				transformer.transform({ input: testItem, includes: ['tags'] })
-			).rejects.toThrow("[T7M] Error in include function 'tags': 404")
+			await expect(transformer.transform({ input: testItem, includes: ['tags'] })).rejects.toThrow(
+				"[T7M] Error in include function 'tags': 404"
+			)
 		})
 
 		it('should wrap a thrown object in the error message using String()', async () => {
@@ -535,9 +537,9 @@ describe('AbstractTransformer - Gap Coverage', () => {
 
 			const transformer = new ObjectThrowTransformer()
 
-			await expect(
-				transformer.transform({ input: testItem, includes: ['extra'] })
-			).rejects.toThrow("[T7M] Error in include function 'extra': [object Object]")
+			await expect(transformer.transform({ input: testItem, includes: ['extra'] })).rejects.toThrow(
+				"[T7M] Error in include function 'extra': [object Object]"
+			)
 		})
 
 		it('should use error.message when an Error instance is thrown', async () => {
@@ -555,9 +557,9 @@ describe('AbstractTransformer - Gap Coverage', () => {
 
 			const transformer = new ErrorThrowTransformer()
 
-			await expect(
-				transformer.transform({ input: testItem, includes: ['tags'] })
-			).rejects.toThrow("[T7M] Error in include function 'tags': Cannot read property of undefined")
+			await expect(transformer.transform({ input: testItem, includes: ['tags'] })).rejects.toThrow(
+				"[T7M] Error in include function 'tags': Cannot read property of undefined"
+			)
 		})
 
 		it('should wrap a rejected promise with a non-Error value', async () => {
@@ -575,9 +577,9 @@ describe('AbstractTransformer - Gap Coverage', () => {
 
 			const transformer = new AsyncStringThrowTransformer()
 
-			await expect(
-				transformer.transform({ input: testItem, includes: ['tags'] })
-			).rejects.toThrow("[T7M] Error in include function 'tags': async failure")
+			await expect(transformer.transform({ input: testItem, includes: ['tags'] })).rejects.toThrow(
+				"[T7M] Error in include function 'tags': async failure"
+			)
 		})
 	})
 
@@ -690,6 +692,7 @@ describe('AbstractTransformer - Gap Coverage', () => {
 					childData: async (input: Item, _props: undefined, forwardedIncludes: string[]) => {
 						return this.child.transform({
 							input,
+							// biome-ignore lint/suspicious/noExplicitAny: testing forwarded includes
 							includes: forwardedIncludes as any,
 						})
 					},

@@ -87,11 +87,6 @@ const fetchPostsByAuthorId = async (authorId: number): Promise<Post[]> => {
 	return posts.filter(p => p.authorId === authorId)
 }
 
-const fetchPostById = async (id: number): Promise<Post | undefined> => {
-	postFetchCount++
-	return posts.find(p => p.id === id)
-}
-
 const fetchCommentsByPostId = async (postId: number): Promise<Comment[]> => {
 	commentFetchCount++
 	return comments.filter(c => c.postId === postId)

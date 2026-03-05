@@ -2,8 +2,8 @@
 // These are compile-time only assertions - no runtime tests.
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { AbstractTransformer, type IncludeFunction } from '../src/abstractTransformer'
 import type { IncludesOf, InputOf, OutputOf, PropsOf } from '../src'
+import { AbstractTransformer, type IncludeFunction } from '../src/abstractTransformer'
 
 // Helper types for testing type equality
 type Expect<T extends true> = T
@@ -121,6 +121,7 @@ type test_NoPropsTransformProps = Expect<Equal<NoPropsTransformParams['props'], 
 // ─── 3. IncludeFunction type ────────────────────────────────────────
 
 // Verify the IncludeFunction type signature matches expected shape
+// biome-ignore lint/correctness/noUnusedVariables: type-level test assertion
 type ExpectedCategoryIncludeFn = (
 	input: Item,
 	props: ItemProps,
