@@ -33,6 +33,7 @@ src/
 ├── types.ts                  # OnlyPossiblyUndefined helper
 ├── typeHelper.ts             # InputOf, OutputOf, PropsOf, IncludesOf
 ├── index.ts                  # Entry: t7m
+├── semaphore.ts              # Async semaphore for concurrency control
 └── hono/
     ├── middleware.ts          # t7mMiddleware
     ├── augment.ts             # Hono Context type augmentation
@@ -122,6 +123,42 @@ await transformer.transform({ input: user })
 
 // Props type defined → props is REQUIRED
 await transformer.transform({ input: user, props: { db } })
+```
+
+### 9. `concurrency` only applies to `transformMany` / `_transformMany`
+
+- `concurrency` in constructor limits parallel items in batch methods only
+- `transform()` and `_transform()` (single item) are NOT throttled by `concurrency`
+- Per-include limits (`includesConcurrency`) apply to ALL transform methods
+- The semaphore is instance-level: shared across all concurrent calls on the same instance
+
+```typescript
+// concurrency: 5 limits transformMany to 5 parallel items
+// Does NOT limit concurrent transform() calls
+class MyTransformer extends AbstractTransformer<In, Out> {
+  constructor() {
+    super({ concurrency: 5 })
+  }
+
+  // Per-include limits apply everywhere (transform + transformMany)
+  includesConcurrency = {
+    posts: 3,
+  }
+}
+```
+
+### 10. `includesConcurrency` is a class property, not constructor config
+
+```typescript
+// ✅ CORRECT — class property (like includesMap)
+includesConcurrency = {
+  posts: 3,
+}
+
+// ❌ WRONG — not a constructor param
+constructor() {
+  super({ includesConcurrency: { posts: 3 } }) // Does not exist
+}
 ```
 
 ## Testing

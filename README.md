@@ -355,6 +355,93 @@ Concurrent calls with the same input don't even wait — they share a single in-
 | 10,000 cached primitive lookups | microseconds per lookup |
 | Cached vs uncached (1ms async op, 1,000 calls) | ~1ms cached vs ~1,000ms uncached |
 
+## Concurrency Control
+
+### The Problem
+
+`transformMany` processes all items in parallel via `Promise.all`, and each item's includes also run in parallel. This is great for speed, but when includes make external API calls (e.g., auth providers, third-party APIs), hundreds of concurrent requests can overwhelm rate limits or hit connection ceilings.
+
+### Item-Level Concurrency
+
+The `concurrency` constructor parameter limits how many items `transformMany` / `_transformMany` process in parallel:
+
+```typescript
+class CommentTransformer extends AbstractTransformer<Comment, PublicComment> {
+  constructor() {
+    super({ concurrency: 5 }) // Process at most 5 items at a time
+  }
+
+  // ...
+}
+
+// 100 comments — processed in batches of 5 instead of all at once
+await transformer.transformMany({ inputs: comments, includes: ['author'] })
+```
+
+This does **not** apply to `transform` / `_transform` (single item — nothing to throttle).
+
+### Per-Include Concurrency
+
+The `includesConcurrency` property limits how many times a specific include function can run concurrently across all items. Include keys not listed remain unlimited:
+
+```typescript
+class CommentTransformer extends AbstractTransformer<Comment, PublicComment> {
+  includesConcurrency = {
+    author: 3, // At most 3 concurrent author lookups across all items
+  }
+
+  includesMap = {
+    author: async (input: Comment) => {
+      const user = await auth.getUser(input.userId)
+      return { name: user.name }
+    },
+    tags: async (input: Comment) => {
+      // No limit — runs with full parallelism
+      return await db.getTagsForComment(input.id)
+    },
+  }
+}
+```
+
+The semaphore is shared across all calls on the same transformer instance, so even if multiple `transformMany` calls overlap, the limit holds.
+
+### Combined Example
+
+Use both together for fine-grained control:
+
+```typescript
+class CommentTransformer extends AbstractTransformer<Comment, PublicComment, { db: Database }> {
+  constructor() {
+    super({ concurrency: 10 }) // 10 items in parallel
+  }
+
+  cache = {
+    userProfile: new Cache((userId: string) => auth.getUser(userId)),
+  }
+
+  includesConcurrency = {
+    author: 5,  // Max 5 concurrent auth calls
+  }
+
+  data(input: Comment): PublicComment {
+    return { id: input.id, content: input.content }
+  }
+
+  includesMap = {
+    author: async (input: Comment) => {
+      const user = await this.cache.userProfile.call(input.userId)
+      return { name: user.name, avatarUrl: user.picture }
+    },
+  }
+}
+```
+
+### Important Notes
+
+- **Opt-in**: Without configuration, behavior is identical to before (unlimited parallelism). Existing code is unaffected.
+- **Instance-level**: Limits are shared across all calls on the same transformer instance. In server environments where one instance handles multiple requests, concurrent requests share the same semaphore.
+- **Batch methods only**: `transform()` / `_transform()` are not affected by `concurrency` — only `transformMany` / `_transformMany` are throttled. Per-include limits still apply to both single and batch transforms.
+
 ## API Reference
 
 ### AbstractTransformer
