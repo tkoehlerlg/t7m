@@ -239,9 +239,9 @@ abstract class AbstractTransformer<
 		includes = Array.from(new Set(includes))
 		// Handle includes
 		if (includes.length > 0 && typeof data === 'object' && data !== null) {
-			const otherIncludes = includes.filter(include => !(include in this.includesMap))
+			const otherIncludes = includes.filter(include => !Object.hasOwn(this.includesMap, include))
 			const validIncludes = includes
-				.filter(include => include in this.includesMap)
+				.filter(include => Object.hasOwn(this.includesMap, include))
 				.map(include => include as Includes)
 			await Promise.all(
 				validIncludes.map(async include => {
