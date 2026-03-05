@@ -1,6 +1,6 @@
 ---
 name: build-transformer
-description: Build t7m transformers for API output transformation. Use when creating new transformers, adding includes, configuring cache, or wiring transformers into Hono routes.
+description: Build t7m transformers for API output transformation. Use when creating new transformers, adding includes, configuring cache, or wiring transformers into Hono or Elysia routes.
 ---
 
 # Building a t7m Transformer
@@ -103,3 +103,4 @@ new Cache(fn, { clearCacheOnTransform: false })
 - For includes, props, cache, nested transformers, and access modifiers, see [reference.md](reference.md)
 - For concurrency control (throttling external API calls), see [reference.md — Concurrency Control](reference.md#concurrency-control)
 - For Hono middleware integration and route patterns, see [hono.md](hono.md)
+- For Elysia plugin integration and route patterns, see [elysia.md](elysia.md)
