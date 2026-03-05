@@ -6,7 +6,7 @@ APIs shouldn't return raw database models. Sensitive fields leak, related data l
 
 t7m is a transformer layer that fixes this: one class per model controls what gets exposed, loads includes in parallel, and caches repeated calls.
 
-Works with Hono (Elysia coming soon). No overhead — 1,000 objects with includes in under 100ms.
+Works with Hono and Elysia. No overhead — 1,000 objects with includes in under 100ms.
 
 *t7m = t(ransfor)m - 7 letters between t and m*
 
@@ -173,7 +173,7 @@ When transforming data, you often need to enrich it with external information. C
 
 **Keep in mind:**
 - Cache lives on the transformer instance — reuse one instance per request, don't create a new one each call
-- There's no TTL. The Hono middleware clears caches after each response; when calling `transform()`/`transformMany()` directly, call `clearCache()` yourself (see [Cache Auto-Clear](#cache-auto-clear))
+- There's no TTL. The framework middleware (Hono/Elysia) clears caches after each response; when calling `transform()`/`transformMany()` directly, call `clearCache()` yourself (see [Cache Auto-Clear](#cache-auto-clear))
 
 ### Basic Usage
 
@@ -327,7 +327,78 @@ Custom HTTP `headers` can be passed as the 5th parameter.
 
 ### Elysia
 
-Elysia integration is in development.
+#### Setup
+
+```typescript
+import { Elysia } from 'elysia';
+import { t7mPlugin } from 't7m/elysia';
+
+const app = new Elysia();
+app.use(t7mPlugin());
+```
+
+The plugin injects `transform()` and `transformMany()` into every route handler via Elysia's `derive`.
+
+Basic route usage:
+
+```typescript
+app.get("/users", async ({ transformMany }) => {
+  const users = await db.users;
+  return transformMany(users, new UserTransformer());
+  // transform(user, new UserTransformer()) for single objects
+});
+```
+
+#### Automatic Query Parameter Parsing
+
+The plugin automatically reads `?include=` from the query string and passes them as includes to the transformer.
+
+```
+GET /users?include=posts,comments
+// Automatically applies includes: ["posts", "comments"]
+```
+
+No additional code needed - just use the plugin.
+
+#### Extras
+
+The third parameter (`extras`) supports these options:
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `includes` | `IncludesOf<T>[]` | Type-safe includes (used instead of query params) |
+| `wrapper` | `(data) => T` | Wrap the response (e.g., `{ data: result }`) |
+| `debug` | `boolean` | Enable colored console logging for debugging |
+| `props` | `PropsOf<T>` | Props to pass to the transformer |
+
+The extras parameter is **optional when your transformer has no Props type** — no empty `{}` needed (unlike Hono).
+
+Example with wrapper and debug:
+
+```typescript
+app.get("/users", async ({ transformMany }) => {
+  const users = await db.users;
+  return transformMany(users, new UserTransformer(), {
+    wrapper: (data) => ({ data, count: data.length }),
+    debug: true,
+  });
+});
+```
+
+#### Key Difference from Hono
+
+Elysia handlers return plain data — no `c.json()` equivalent. The plugin's `transform()` returns the transformed object directly. For status codes and headers, use Elysia's `set`:
+
+```typescript
+app.get("/users/:id", async ({ transform, set }) => {
+  const user = await db.users.findOne(id);
+  if (!user) {
+    set.status = 404;
+    return { error: "Not found" };
+  }
+  return transform(user, new UserTransformer());
+});
+```
 
 ## Performance
 
