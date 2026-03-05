@@ -124,7 +124,7 @@ abstract class AbstractTransformer<
 	// MARK: Transformer
 	transformers: Record<string, AnyAbstractTransformer | Cache<() => AnyAbstractTransformer>> = {}
 
-	// Tracks how many _transform/_transformMany calls are currently active on this node (or any ancestor).
+	// Tracks how many transform/_transform/transformMany/_transformMany calls are currently active.
 	// Cache is only cleared when this reaches 0, preventing premature clearing during concurrent transforms.
 	private activeTransforms = 0
 
@@ -159,7 +159,13 @@ abstract class AbstractTransformer<
 	): Promise<TOutput> {
 		const { input, props, includes, unsafeIncludes } = params
 		const combinedIncludes = [...(includes || []), ...(unsafeIncludes || [])]
-		return this.__transform(input, props as Props, combinedIncludes)
+		this.adjustActiveTransforms(1)
+		try {
+			return await this.__transform(input, props as Props, combinedIncludes)
+		} finally {
+			this.adjustActiveTransforms(-1)
+			if (this.activeTransforms === 0 && this.clearCacheOnTransform) this.clearCache()
+		}
 	}
 
 	/**
@@ -176,7 +182,13 @@ abstract class AbstractTransformer<
 	): Promise<TOutput[]> {
 		const { inputs, props, includes, unsafeIncludes } = params
 		const combinedIncludes = [...(includes || []), ...(unsafeIncludes || [])]
-		return Promise.all(inputs.map(input => this.runTransform(input, props as Props, combinedIncludes)))
+		this.adjustActiveTransforms(1)
+		try {
+			return await Promise.all(inputs.map(input => this.runTransform(input, props as Props, combinedIncludes)))
+		} finally {
+			this.adjustActiveTransforms(-1)
+			if (this.activeTransforms === 0 && this.clearCacheOnTransform) this.clearCache()
+		}
 	}
 
 	// Generic functions
