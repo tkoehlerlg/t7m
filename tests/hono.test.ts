@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, spyOn } from 'bun:test'
+import { afterAll, afterEach, beforeAll, describe, expect, it, spyOn } from 'bun:test'
 import { Hono } from 'hono'
 import { AbstractTransformer } from '../src'
 import { t7mMiddleware } from '../src/hono'
@@ -327,6 +327,13 @@ describe('t7mMiddleware', () => {
 	// 8. debug option
 	// -------------------------------------------------------
 	describe('debug option', () => {
+		beforeAll(() => {
+			process.env.T7M_DEBUG = 'true'
+		})
+		afterAll(() => {
+			delete process.env.T7M_DEBUG
+		})
+
 		it('should call console.log when debug is true for c.transform()', async () => {
 			const transformer = new UserTransformer()
 			const app = new Hono()
@@ -387,6 +394,52 @@ describe('t7mMiddleware', () => {
 			// Should have at least 4 calls (extra one for "Includes Received:")
 			const calls = consoleSpy.mock.calls
 			expect(calls.length).toBeGreaterThanOrEqual(4)
+		})
+	})
+
+	// -------------------------------------------------------
+	// 8b. debug gate without T7M_DEBUG env var
+	// -------------------------------------------------------
+	describe('debug gate without T7M_DEBUG env var', () => {
+		afterAll(() => {
+			delete process.env.T7M_DEBUG
+		})
+
+		it('should not call console.log when debug is true but T7M_DEBUG is not set', async () => {
+			delete process.env.T7M_DEBUG
+
+			const transformer = new UserTransformer()
+			const app = new Hono()
+			app.use('*', t7mMiddleware)
+			app.get('/user', async c => {
+				return c.transform(testUser, transformer, { debug: true })
+			})
+
+			await app.request('/user')
+
+			expect(consoleSpy).not.toHaveBeenCalled()
+		})
+
+		it('should still transform correctly when debug is true but T7M_DEBUG is not set', async () => {
+			delete process.env.T7M_DEBUG
+
+			const transformer = new UserTransformer()
+			const app = new Hono()
+			app.use('*', t7mMiddleware)
+			app.get('/user', async c => {
+				return c.transform(testUser, transformer, { debug: true, includes: ['avatar'] })
+			})
+
+			const res = await app.request('/user')
+
+			expect(res.status).toBe(200)
+			const body = await res.json()
+			expect(body).toEqual({
+				name: 'Alice',
+				email: 'alice@example.com',
+				avatar: 'https://avatar.example.com/1',
+			})
+			expect(consoleSpy).not.toHaveBeenCalled()
 		})
 	})
 

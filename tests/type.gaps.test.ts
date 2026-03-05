@@ -1,8 +1,6 @@
 // Type-level gap tests for AbstractTransformer
 // These are compile-time only assertions - no runtime tests.
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
-import type { IncludesOf, InputOf, OutputOf, PropsOf } from '../src'
 import { AbstractTransformer, type IncludeFunction } from '../src/abstractTransformer'
 
 // Helper types for testing type equality

@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { describe, expect, it } from 'bun:test'
 import { AbstractTransformer } from '../src/abstractTransformer'
 
@@ -13,7 +10,6 @@ interface ComplexInput {
 		secondary?: string
 		nested: {
 			value: number
-			// biome-ignore lint/suspicious/noExplicitAny: Just for this test case
 			metadata?: Record<string, any>
 		}
 	}
@@ -31,7 +27,6 @@ interface ComplexOutput {
 	enriched?: {
 		source: string
 		processed: boolean
-		// biome-ignore lint/suspicious/noExplicitAny: Just for this test case
 		details?: any
 	}
 }
@@ -232,7 +227,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
 			}
 
 			// Should not throw when includes aren't used
-			expect(() => {
+			await expect(
 				transformer.transform({
 					input: problematicInput,
 					props: {
@@ -241,7 +236,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
 						enrichmentLevel: 1,
 					},
 				})
-			}).not.toThrow()
+			).resolves.toBeDefined()
 
 			// Should throw when problematic includes are used
 			await expect(
@@ -332,7 +327,6 @@ describe('AbstractTransformer - Advanced Tests', () => {
 			accountType: 'user' | 'admin'
 			details?: {
 				info: string
-				// biome-ignore lint/suspicious/noExplicitAny: Just for this test case
 				extra?: any
 			}
 		}

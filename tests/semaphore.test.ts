@@ -67,4 +67,50 @@ describe('Semaphore', () => {
 		const result = await semaphore.run(async () => 42)
 		expect(result).toBe(42)
 	})
+
+	it('should throw when queue exceeds maxQueue', async () => {
+		const semaphore = new Semaphore(1, 5)
+		let release!: () => void
+		const barrier = new Promise<void>(r => {
+			release = r
+		})
+
+		// Fill the active slot
+		const blocker = semaphore.run(() => barrier)
+
+		// Queue 5 tasks (maxQueue: 5) — should succeed
+		const queued = Array.from({ length: 5 }, (_, i) => semaphore.run(async () => i))
+
+		// 6th queued task should throw
+		expect(() => semaphore.run(async () => 'overflow')).toThrow('[T7M] Semaphore queue is full')
+
+		// Unblock and let everything finish
+		release()
+		await blocker
+		await Promise.all(queued)
+	})
+
+	it('should allow unlimited queue when maxQueue is not set', async () => {
+		const semaphore = new Semaphore(1)
+		let release!: () => void
+		const barrier = new Promise<void>(r => {
+			release = r
+		})
+
+		const blocker = semaphore.run(() => barrier)
+
+		// Queue many tasks — should not throw
+		const queued = Array.from({ length: 100 }, (_, i) => semaphore.run(async () => i))
+
+		release()
+		await blocker
+		const results = await Promise.all(queued)
+		expect(results).toHaveLength(100)
+	})
+
+	it('should throw for invalid maxQueue values', () => {
+		expect(() => new Semaphore(1, 0)).toThrow('Semaphore maxQueue must be a positive integer')
+		expect(() => new Semaphore(1, -1)).toThrow('Semaphore maxQueue must be a positive integer')
+		expect(() => new Semaphore(1, 1.5)).toThrow('Semaphore maxQueue must be a positive integer')
+	})
 })

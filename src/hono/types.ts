@@ -1,4 +1,4 @@
-import { TypedResponse } from 'hono'
+import type { TypedResponse } from 'hono'
 import type { ResponseHeader } from 'hono/utils/headers'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import type { BaseMime } from 'hono/utils/mime'

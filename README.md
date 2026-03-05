@@ -10,6 +10,18 @@ Works with Hono and Elysia. No overhead — 1,000 objects with includes in under
 
 *t7m = t(ransfor)m - 7 letters between t and m*
 
+## AI Agent Skill
+
+t7m ships with a [Claude Code skill](https://code.claude.com/docs/en/skills) that teaches AI coding agents how to build transformers correctly — includes, cache, props, nested transformers, and framework integration.
+
+Install it with the [Vercel Skills CLI](https://github.com/vercel-labs/skills):
+
+```bash
+npx skills add tkoehlerlg/t7m
+```
+
+This works with Claude Code, Cursor, Codex, and other agents that support the open agent skills standard.
+
 ## Quick Start
 
 ```bash
@@ -155,6 +167,7 @@ t7m exports utility types for extracting type information from transformer insta
 
 | Type | Description |
 |------|-------------|
+| `AnyAbstractTransformer` | Base type for typing transformer collections and generic utilities |
 | `InputOf<T>` | Extract the input type from a transformer |
 | `OutputOf<T>` | Extract the output type from a transformer |
 | `PropsOf<T>` | Extract the props type from a transformer |
@@ -226,18 +239,20 @@ For object arguments, specify which keys to use for the cache key:
 ```typescript
 const cached = new Cache(
   (params: { id: number; timestamp: number }) => db.users.findOne({ id: params.id }),
-  "id" // Only cache on 'id', ignore 'timestamp'
+  { on: ["id"] } // Only cache on 'id', ignore 'timestamp'
 );
 
 await cached.call({ id: 1, timestamp: 100 });
 await cached.call({ id: 1, timestamp: 200 }); // Cache hit!
 ```
 
-You can specify multiple keys: `new Cache(fn, "id", "type")`
+You can specify multiple keys: `new Cache(fn, { on: ["id", "type"] })`
+
+Limit cache size with `maxSize`: `new Cache(fn, { maxSize: 100 })`
 
 ### Cache Auto-Clear
 
-By default, caches clear after each transformation when using the framework middleware. When using `transform()`/`transformMany()` directly, call `clearCache()` manually. Disable auto-clear with:
+By default, caches clear after each transformation. Disable auto-clear with:
 
 ```typescript
 class MyTransformer extends AbstractTransformer<Input, Output> {
@@ -548,7 +563,7 @@ class CommentTransformer extends AbstractTransformer<Comment, PublicComment, { d
 
 | Method | Description |
 |--------|-------------|
-| `new Cache(fn, ...keys)` | Create a cache. `fn` must take 0 or 1 argument. `keys` specifies which object properties to use as cache key (optional, accepts multiple keys). |
+| `new Cache(fn, options?)` | Create a cache. `fn` must take 0 or 1 argument. `options.on` specifies which object properties to use as cache key. `options.maxSize` limits entries (oldest evicted). |
 | `call(...args)` | Call the cached function. Same-input calls return cached result. Concurrent calls share the same promise. |
 | `clear()` | Clear all cached results. |
 

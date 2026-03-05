@@ -17,12 +17,12 @@ TypeScript library for API output transformation. Triple export: `t7m` (core) + 
 
 - **Indent**: Tabs (width 4)
 - **Quotes**: Single
-- **Semicolons**: None
+- **Semicolons**: asNeeded
 - **Line width**: 120 chars
 - **Line endings**: LF
 - **Arrow parens**: asNeeded (`x => x`, not `(x) => x`)
 - **Trailing commas**: ES5
-- **noExplicitAny**: warn — use `// biome-ignore lint/suspicious/noExplicitAny: reason` when needed
+- **noExplicitAny**: warn in src, off in tests
 
 ## Architecture
 
@@ -55,7 +55,8 @@ dist/                          # Build output (git-ignored)
 ### 1. `transform()` vs `_transform()`
 
 - `transform()` / `transformMany()`: Public API. Props conditionally required.
-- `_transform()` / `_transformMany()`: Used by Hono middleware and Elysia plugin. Props always required. Handles cache lifecycle.
+- `_transform()` / `_transformMany()`: Used by Hono middleware and Elysia plugin. Props always required.
+- Both APIs manage cache lifecycle (activeTransforms counter + clearCacheOnTransform).
 - Don't confuse them — both Hono middleware and Elysia plugin call `_transform()`, not `transform()`.
 
 ### 2. All transform methods take a params OBJECT
@@ -84,7 +85,7 @@ this.cache.userProfile.get(input.userId)
 ### 4. `transformers` is a Record, not an array
 
 ```typescript
-// ✅ CORRECT — Record<string, Transformer | Cache<() => Transformer>>
+// ✅ CORRECT — Record<string, AnyAbstractTransformer | Cache<() => AnyAbstractTransformer>>
 transformers = { author: this.authorTransformer }
 transformers = { author: new Cache(() => new AuthorTransformer()) }
 
@@ -100,7 +101,7 @@ constructor() {
   super({ clearCacheOnTransform: false })
 }
 
-// ❌ WRONG
+// ❌ WRONG — Cache options are { on?, maxSize? }, not clearCacheOnTransform
 new Cache(fn, { clearCacheOnTransform: false })
 ```
 
@@ -108,7 +109,7 @@ new Cache(fn, { clearCacheOnTransform: false })
 
 - `data(input, props)` → `protected abstract` — never call from outside
 - `includesMap` → `protected readonly` — initialize in class body
-- `cache` → `public readonly`
+- `cache` → `readonly` (implicitly public)
 - `transformers` → `public` (not readonly)
 
 ### 7. Includes only work with optional output properties
@@ -175,6 +176,9 @@ constructor() {
 
 ## Git
 
+- **Separate commits** per logical change (e.g. data layer, UI components, refactors)
+- **Short messages**, no description body, imperative mood, max ~60 chars
 - **Commit format**: `type: description` (lowercase) — e.g., `fix: loosen perf test threshold`
+- **Allowed prefixes**: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `perf`, `ci`
 - **Main branch**: `main`
 - **CI**: GitHub Actions, publishes on `v*` tags

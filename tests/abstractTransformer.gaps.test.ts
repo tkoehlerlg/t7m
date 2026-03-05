@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { describe, expect, it } from 'bun:test'
 import { AbstractTransformer } from '../src/abstractTransformer'
 import { Cache } from '../src/lib/cache'
@@ -423,9 +421,7 @@ describe('AbstractTransformer - Gap Coverage', () => {
 		it('should skip includes when data() returns null', async () => {
 			let includeWasCalled = false
 
-			// biome-ignore lint/suspicious/noExplicitAny: testing edge case with null return
 			class NullDataTransformer extends AbstractTransformer<Item, any> {
-				// biome-ignore lint/suspicious/noExplicitAny: testing edge case with null return
 				data(_input: Item): any {
 					return null
 				}
@@ -441,7 +437,6 @@ describe('AbstractTransformer - Gap Coverage', () => {
 			const transformer = new NullDataTransformer()
 			const result = await transformer.transform({
 				input: testItem,
-				// biome-ignore lint/suspicious/noExplicitAny: testing edge case
 				includes: ['tags'] as any,
 			})
 
@@ -452,9 +447,7 @@ describe('AbstractTransformer - Gap Coverage', () => {
 		it('should skip includes when data() returns a non-object primitive', async () => {
 			let includeWasCalled = false
 
-			// biome-ignore lint/suspicious/noExplicitAny: testing edge case with primitive return
 			class PrimitiveDataTransformer extends AbstractTransformer<Item, any> {
-				// biome-ignore lint/suspicious/noExplicitAny: testing edge case with primitive return
 				data(_input: Item): any {
 					return 42
 				}
@@ -470,7 +463,6 @@ describe('AbstractTransformer - Gap Coverage', () => {
 			const transformer = new PrimitiveDataTransformer()
 			const result = await transformer.transform({
 				input: testItem,
-				// biome-ignore lint/suspicious/noExplicitAny: testing edge case
 				includes: ['tags'] as any,
 			})
 
@@ -692,7 +684,6 @@ describe('AbstractTransformer - Gap Coverage', () => {
 					childData: async (input: Item, _props: undefined, forwardedIncludes: string[]) => {
 						return this.child.transform({
 							input,
-							// biome-ignore lint/suspicious/noExplicitAny: testing forwarded includes
 							includes: forwardedIncludes as any,
 						})
 					},

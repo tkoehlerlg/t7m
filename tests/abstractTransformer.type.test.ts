@@ -1,7 +1,6 @@
 // Type-level tests for AbstractTransformer
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { AbstractTransformer, IncludesOf, InputOf, OutputOf, PropsOf } from '../src'
+import { AbstractTransformer, type IncludesOf, type InputOf, type OutputOf, type PropsOf } from '../src'
 
 // Helper type for testing type equality
 type Expect<T extends true> = T

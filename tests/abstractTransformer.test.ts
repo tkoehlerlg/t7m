@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { describe, expect, it } from 'bun:test'
 import { AbstractTransformer } from '../src/abstractTransformer'
 import { Cache } from '../src/lib/cache'
@@ -16,7 +14,6 @@ interface PublicUser {
 	name: string
 	email: string
 	avatar?: string
-	// biome-ignore lint/suspicious/noExplicitAny: Just for this test case
 	metadata?: Record<string, any>
 }
 
@@ -320,6 +317,37 @@ describe('AbstractTransformer', () => {
 			expect(results[1]!.avatar).toBe('https://avatar.com/2')
 			expect(results[2]!.avatar).toBe('https://avatar.com/1')
 			// Only 2 fetcher calls (ids 1 and 2), not 3
+			expect(mockFetcher.getCallCount()).toBe(2)
+		})
+
+		it('should clear cache after transform() by default', async () => {
+			const mockFetcher = createMockFetcher()
+
+			class CachedTransformer extends AbstractTransformer<User, PublicUser> {
+				cache = {
+					avatarFetcher: new Cache(mockFetcher.fn),
+				}
+
+				data(input: User): PublicUser {
+					return { name: input.name, email: input.email }
+				}
+
+				includesMap = {
+					avatar: async (input: User) => {
+						const result = await this.cache.avatarFetcher.call(input.id)
+						return result.avatarUrl
+					},
+				}
+			}
+
+			const transformer = new CachedTransformer()
+
+			// First transform
+			await transformer.transform({ input: testUser, includes: ['avatar'] })
+			expect(mockFetcher.getCallCount()).toBe(1)
+
+			// Second transform - cache should be cleared, so fetcher called again
+			await transformer.transform({ input: testUser, includes: ['avatar'] })
 			expect(mockFetcher.getCallCount()).toBe(2)
 		})
 

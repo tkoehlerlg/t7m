@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { AbstractTransformer, AnyAbstractTransformer } from '../src/abstractTransformer'
+import { AbstractTransformer } from '../src/abstractTransformer'
 import { Cache } from '../src/lib/cache'
 
 // Test types
@@ -631,7 +631,6 @@ describe('SubTransformer Tests', () => {
 
 			// Child cache should also be cleared
 			// Call child cache again - if cleared, this will be a fresh call
-			// biome-ignore lint/suspicious/noExplicitAny: accessing private cache internals for testing
 			const childCacheSizeBefore = (parent.childTransformer.cache.data as any).cache?.size ?? 0
 			expect(childCacheSizeBefore).toBe(0) // Cache was cleared
 		})
@@ -855,11 +854,10 @@ describe('SubTransformer Tests', () => {
 			expect(clearLog.indexOf('child:clear')).toBeGreaterThan(clearLog.indexOf('child:data'))
 		})
 
-		it('should restore child clearCacheOnTransform after parent completes', async () => {
+		it('should not mutate child clearCacheOnTransform during parent transform', async () => {
 			resetClearLog()
 			resetFetchCounts()
 
-			// Child with clearCacheOnTransform: true (default would be true, but we set explicitly)
 			class RestoredChildTransformer extends AbstractTransformer<Author, AuthorOutput> {
 				constructor() {
 					super({ clearCacheOnTransform: true })
@@ -907,8 +905,80 @@ describe('SubTransformer Tests', () => {
 				includes: ['author'],
 			})
 
-			// After transform completes, child's clearCacheOnTransform should be restored to true
+			// clearCacheOnTransform is readonly — it should remain true throughout
 			expect(getChildClearCache()).toBe(true)
+		})
+
+		it('should not clear cache mid-flight when two _transform calls overlap', async () => {
+			resetFetchCounts()
+
+			class ConcurrentChildTransformer extends AbstractTransformer<Author, AuthorOutput> {
+				constructor() {
+					super({ clearCacheOnTransform: false })
+				}
+
+				cache = {
+					data: new Cache(async (id: number) => ({ fetched: true, id })),
+				}
+
+				data(input: Author): AuthorOutput {
+					return { id: input.id, name: input.name }
+				}
+			}
+
+			class ConcurrentParentTransformer extends AbstractTransformer<Post, PostOutput> {
+				childTransformer = new ConcurrentChildTransformer()
+
+				constructor() {
+					super({ clearCacheOnTransform: true })
+					this.transformers = { child: this.childTransformer }
+				}
+
+				cache = {
+					author: new Cache(fetchAuthorById),
+				}
+
+				data(input: Post): PostOutput {
+					return { id: input.id, title: input.title }
+				}
+
+				includesMap = {
+					author: async (input: Post) => {
+						const author = await this.cache.author.call(input.authorId)
+						if (!author) return undefined
+						return this.childTransformer.transform({ input: author })
+					},
+				}
+			}
+
+			const transformer = new ConcurrentParentTransformer()
+
+			// Pre-populate cache
+			await transformer.cache.author.call(1)
+			expect(authorFetchCount).toBe(1)
+
+			// Fire two overlapping _transform calls on the same instance
+			const callA = transformer._transform({
+				input: posts[0]!,
+				props: undefined,
+				includes: ['author'],
+			})
+
+			const callB = transformer._transform({
+				input: posts[1]!,
+				props: undefined,
+				includes: ['author'],
+			})
+
+			const [resultA, resultB] = await Promise.all([callA, callB])
+
+			expect(resultA.id).toBe(1)
+			expect(resultB.id).toBe(2)
+			// Both posts share authorId=1 — the cache should have been available
+			// throughout both transforms, only cleared after the last one finishes.
+			// Without the counter fix, Call A finishing first would clear the cache
+			// while Call B is still running.
+			expect(authorFetchCount).toBe(1)
 		})
 	})
 })

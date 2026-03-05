@@ -114,16 +114,16 @@ For object arguments, specify which keys to use for the cache key:
 ```typescript
 const cached = new Cache(
 	(params: { id: number; timestamp: number }) => db.users.findOne({ id: params.id }),
-	'id' // Only cache on 'id', ignore 'timestamp'
+	{ on: ['id'] } // Only cache on 'id', ignore 'timestamp'
 )
-// Multiple keys: new Cache(fn, 'id', 'type')
+// Multiple keys: new Cache(fn, { on: ['id', 'type'] })
+// Limit cache size: new Cache(fn, { maxSize: 100 })
 ```
 
 ### Cache Lifecycle
 
 - Cache lives on the transformer instance — reuse one instance per request
-- No TTL. The Hono middleware clears caches after each response
-- When calling `transform()`/`transformMany()` directly, call `clearCache()` yourself
+- No TTL. All transform methods (`transform`, `transformMany`, `_transform`, `_transformMany`) auto-clear caches after completion when `clearCacheOnTransform` is true (default)
 - `clearCacheOnTransform` is set on `AbstractTransformer` via `super()`, **not** on `Cache`
 - `transformMany()` processes all items in parallel via `Promise.all`, so duplicate cache calls across items are deduplicated
 
@@ -131,9 +131,6 @@ const cached = new Cache(
 constructor() {
 	super({ clearCacheOnTransform: false }) // Disable auto-clear
 }
-
-// When not using the Hono middleware, clear cache manually
-transformer.clearCache()
 ```
 
 ## Nested Transformers
@@ -168,7 +165,8 @@ Circular references between transformers are handled safely — cache clearing u
 ## `transform()` vs `_transform()`
 
 - `transform()` / `transformMany()`: **Public API.** Props conditionally required. Use these in your application code.
-- `_transform()` / `_transformMany()`: Used by Hono middleware internally. Props always required. Handles cache lifecycle (before/after hooks). Don't call these directly — the middleware does it for you.
+- `_transform()` / `_transformMany()`: Used by Hono middleware and Elysia plugin internally. Props always required. Don't call these directly — the middleware/plugin does it for you.
+- Both APIs manage cache lifecycle (activeTransforms counter + clearCacheOnTransform).
 
 ## Type Utilities
 
