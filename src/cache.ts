@@ -61,12 +61,11 @@ class Cache<FN extends (() => any) | ((arg: any) => any)> {
 		} else {
 			cacheKey = this.objectCacheKey(Object.keys(arg) as (keyof Parameters<FN>[0])[], arg)
 		}
-		let result = this.cache.get(cacheKey)
-		if (!result) {
-			result = (this.fn as (...args: Parameters<FN>) => ReturnType<FN>)(...args)
+		if (!this.cache.has(cacheKey)) {
+			const result = (this.fn as (...args: Parameters<FN>) => ReturnType<FN>)(...args)
 			this.cache.set(cacheKey, result as ReturnType<FN>)
 		}
-		return result as ReturnType<FN>
+		return this.cache.get(cacheKey) as ReturnType<FN>
 	}
 
 	/** Clears all cached promises. */
