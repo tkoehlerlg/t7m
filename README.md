@@ -283,7 +283,7 @@ Basic route usage:
 
 ```typescript
 app.get("/users", async (c) => {
-  const users = await db.users;
+  const users = await db.users.findMany();
   return c.transformMany(users, new UserTransformer(), {}, 200);
   // c.transform(user, new UserTransformer(), {}, 200) for single objects
 });
@@ -307,7 +307,7 @@ The third parameter (`extras`) supports these options:
 | Option | Type | Description |
 |--------|------|-------------|
 | `includes` | `IncludesOf<T>[]` | Type-safe includes (used instead of query params) |
-| `wrapper` | `(data) => T` | Wrap the response (e.g., `{ data: result }`) |
+| `wrapper` | `(data) => O` | Wrap the response (e.g., `{ data: result }`) |
 | `debug` | `boolean` | Enable colored console logging for debugging |
 | `props` | `PropsOf<T>` | Props to pass to the transformer |
 
@@ -315,7 +315,7 @@ Example with wrapper and debug:
 
 ```typescript
 app.get("/users", async (c) => {
-  const users = await db.users;
+  const users = await db.users.findMany();
   return c.transformMany(users, new UserTransformer(), {
     wrapper: (data) => ({ data, count: data.length }),
     debug: true,
@@ -343,7 +343,7 @@ Basic route usage:
 
 ```typescript
 app.get("/users", async ({ transformMany }) => {
-  const users = await db.users;
+  const users = await db.users.findMany();
   return transformMany(users, new UserTransformer());
   // transform(user, new UserTransformer()) for single objects
 });
@@ -367,7 +367,7 @@ The third parameter (`extras`) supports these options:
 | Option | Type | Description |
 |--------|------|-------------|
 | `includes` | `IncludesOf<T>[]` | Type-safe includes (used instead of query params) |
-| `wrapper` | `(data) => T` | Wrap the response (e.g., `{ data: result }`) |
+| `wrapper` | `(data) => O` | Wrap the response (e.g., `{ data: result }`) |
 | `debug` | `boolean` | Enable colored console logging for debugging |
 | `props` | `PropsOf<T>` | Props to pass to the transformer |
 
@@ -377,7 +377,7 @@ Example with wrapper and debug:
 
 ```typescript
 app.get("/users", async ({ transformMany }) => {
-  const users = await db.users;
+  const users = await db.users.findMany();
   return transformMany(users, new UserTransformer(), {
     wrapper: (data) => ({ data, count: data.length }),
     debug: true,
@@ -387,11 +387,11 @@ app.get("/users", async ({ transformMany }) => {
 
 #### Key Difference from Hono
 
-Elysia handlers return plain data — no `c.json()` equivalent. The plugin's `transform()` returns the transformed object directly. For status codes and headers, use Elysia's `set`:
+Elysia handlers return plain data — the plugin's `transform()` returns the transformed object directly. For status codes and headers, use Elysia's `set`:
 
 ```typescript
-app.get("/users/:id", async ({ transform, set }) => {
-  const user = await db.users.findOne(id);
+app.get("/users/:id", async ({ transform, set, params }) => {
+  const user = await db.users.findOne(params.id);
   if (!user) {
     set.status = 404;
     return { error: "Not found" };

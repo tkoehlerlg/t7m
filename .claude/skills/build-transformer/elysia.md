@@ -48,7 +48,7 @@ The extras object supports these options:
 | Option | Type | Description |
 |--------|------|-------------|
 | `includes` | `IncludesOf<T>[]` | Compile-time type-safe includes (used **instead of** query params). Both flow through the same internal path — the type safety is at the API boundary. |
-| `wrapper` | `(data) => T` | Wrap the response (e.g., `{ data: result }`) |
+| `wrapper` | `(data) => O` | Wrap the response (e.g., `{ data: result }`) |
 | `debug` | `boolean` | Enable colored console logging |
 | `props` | `PropsOf<T>` | Props to pass to the transformer |
 
