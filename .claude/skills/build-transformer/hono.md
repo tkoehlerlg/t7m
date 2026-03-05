@@ -79,7 +79,7 @@ app.get('/users', async (c) => {
 
 ### With Type-Safe Includes
 
-When you pass `includes` in extras, they override query params:
+When you pass a non-empty `includes` array in extras, it takes precedence over query params:
 
 ```typescript
 app.get('/users', async (c) => {
@@ -103,4 +103,4 @@ return c.transform(user, new UserTransformer(), {}, 200, {
 
 ## How It Works Internally
 
-The middleware calls `_transform()` / `_transformMany()` (not `transform()` / `transformMany()`). These internal methods handle the cache lifecycle automatically — clearing caches after each response. You don't need to manage this yourself when using the middleware.
+The middleware calls `_transform()` / `_transformMany()` (not `transform()` / `transformMany()`). These internal methods handle the cache lifecycle automatically — clearing caches after each response.

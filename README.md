@@ -302,7 +302,7 @@ No additional code needed - just use the middleware.
 
 #### Extras
 
-The third parameter (`extras`) supports these options:
+The third parameter (`extras`) is always required — pass `{}` when you don't need any options. It supports these options:
 
 | Option | Type | Description |
 |--------|------|-------------|
@@ -396,6 +396,7 @@ app.get("/users/:id", async ({ transform, set, params }) => {
     set.status = 404;
     return { error: "Not found" };
   }
+  set.headers["X-Custom-Header"] = "value";
   return transform(user, new UserTransformer());
 });
 ```

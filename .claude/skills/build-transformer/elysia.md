@@ -81,7 +81,7 @@ app.get('/users', async ({ transformMany }) => {
 
 ### With Type-Safe Includes
 
-When you pass `includes` in extras, they override query params:
+When you pass a non-empty `includes` array in extras, it takes precedence over query params:
 
 ```typescript
 app.get('/users', async ({ transformMany }) => {
@@ -95,7 +95,7 @@ app.get('/users', async ({ transformMany }) => {
 
 ## Key Difference from Hono
 
-Elysia handlers return plain data — no `c.json()` equivalent. The plugin's `transform()` returns the transformed object directly. For status codes and headers, use Elysia's `set`:
+Elysia handlers return plain data — the plugin's `transform()` returns the transformed object directly. For status codes and headers, use Elysia's `set`:
 
 ```typescript
 app.get('/users/:id', async ({ transform, set, params }) => {
@@ -104,10 +104,11 @@ app.get('/users/:id', async ({ transform, set, params }) => {
 		set.status = 404
 		return { error: 'Not found' }
 	}
+	set.headers['X-Custom-Header'] = 'value'
 	return transform(user, new UserTransformer())
 })
 ```
 
 ## How It Works Internally
 
-The plugin calls `_transform()` / `_transformMany()` (not `transform()` / `transformMany()`). These internal methods handle the cache lifecycle automatically — clearing caches after each response. You don't need to manage this yourself when using the plugin.
+The plugin calls `_transform()` / `_transformMany()` (not `transform()` / `transformMany()`). These internal methods handle the cache lifecycle automatically — clearing caches after each response.
