@@ -1,4 +1,5 @@
 import type { AnyCache, Cache } from './cache'
+import { Semaphore } from './semaphore'
 import type { OnlyPossiblyUndefined } from './types'
 
 /**
@@ -28,6 +29,7 @@ abstract class AbstractTransformer<
 	Includes extends keyof OnlyPossiblyUndefined<TOutput> = keyof OnlyPossiblyUndefined<TOutput>,
 > {
 	protected clearCacheOnTransform: boolean
+	private readonly semaphore?: Semaphore
 
 	// MARK: Constructor
 	/**
@@ -35,8 +37,9 @@ abstract class AbstractTransformer<
 	 * @param params - Configuration options for the transformer.
 	 * @param params.clearCacheOnTransform - Whether to clear the cache after each transform call. Defaults to `true`.
 	 */
-	constructor(params?: { clearCacheOnTransform?: boolean }) {
+	constructor(params?: { clearCacheOnTransform?: boolean; concurrency?: number }) {
 		this.clearCacheOnTransform = params?.clearCacheOnTransform ?? true
+		if (params?.concurrency !== undefined) this.semaphore = new Semaphore(params.concurrency)
 	}
 
 	// MARK: Data
@@ -57,6 +60,23 @@ abstract class AbstractTransformer<
 	protected readonly includesMap: Partial<{
 		[K in Includes]: IncludeFunction<TInput, TOutput, K, Props>
 	}> = {}
+
+	protected readonly includesConcurrency: Partial<{
+		[K in Includes]: number
+	}> = {}
+
+	private _includeSemaphores?: Partial<Record<Includes, Semaphore>>
+
+	private get includeSemaphores(): Partial<Record<Includes, Semaphore>> {
+		if (!this._includeSemaphores) {
+			this._includeSemaphores = {} as Partial<Record<Includes, Semaphore>>
+			for (const key of Object.keys(this.includesConcurrency) as Includes[]) {
+				const limit = this.includesConcurrency[key]
+				if (limit !== undefined) this._includeSemaphores[key] = new Semaphore(limit)
+			}
+		}
+		return this._includeSemaphores
+	}
 
 	// MARK: Cache
 	readonly cache: Record<string, AnyCache> = {}
@@ -133,6 +153,11 @@ abstract class AbstractTransformer<
 		})
 	}
 
+	private runTransform(input: TInput, props: Props, includes: (Includes | string)[]): Promise<TOutput> {
+		const exec = () => this.__transform(input, props, includes)
+		return this.semaphore ? this.semaphore.run(exec) : exec()
+	}
+
 	/**
 	 * Transforms a single input object.
 	 * @param params The parameters for the transformation.
@@ -164,7 +189,7 @@ abstract class AbstractTransformer<
 	): Promise<TOutput[]> {
 		const { inputs, props, includes, unsafeIncludes } = params
 		const combinedIncludes = [...(includes || []), ...(unsafeIncludes || [])]
-		return Promise.all(inputs.map(input => this.__transform(input, props as Props, combinedIncludes)))
+		return Promise.all(inputs.map(input => this.runTransform(input, props as Props, combinedIncludes)))
 	}
 
 	// Generic functions
@@ -202,7 +227,7 @@ abstract class AbstractTransformer<
 		const { inputs, props, includes, unsafeIncludes } = params
 		const combinedIncludes = [...(includes || []), ...(unsafeIncludes || [])]
 		this.onBeforeTransform()
-		const outputArray = await Promise.all(inputs.map(input => this.__transform(input, props, combinedIncludes)))
+		const outputArray = await Promise.all(inputs.map(input => this.runTransform(input, props, combinedIncludes)))
 		if (this.clearCacheOnTransform) this.clearCache()
 		this.onAfterTransform()
 		return outputArray
@@ -231,11 +256,10 @@ abstract class AbstractTransformer<
 				validIncludes.map(async include => {
 					if (!this.includesMap[include]) throw new Error(`Include function not found in includesMap`)
 					try {
-						;(data[include] as TOutput[Includes]) = await this.includesMap[include](
-							input,
-							props,
-							otherIncludes
-						)
+						const includeFn = this.includesMap[include]!
+						const exec = () => includeFn(input, props, otherIncludes)
+						const semaphore = this.includeSemaphores[include]
+						;(data[include] as TOutput[Includes]) = await (semaphore ? semaphore.run(exec) : exec())
 					} catch (error) {
 						// Re-throw the error to maintain the expected behavior
 						throw new Error(
