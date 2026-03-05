@@ -171,6 +171,10 @@ type UserOutput = OutputOf<UserTransformer>; // PublicUser
 
 When transforming data, you often need to enrich it with external information. Cache wraps any function and ensures calls with the same input resolve only once. Concurrent calls share the same promise - no duplicate requests, no race conditions.
 
+**Keep in mind:**
+- Cache lives on the transformer instance — reuse one instance per request, don't create a new one each call
+- There's no TTL. The Hono middleware clears caches after each response; when calling `transform()`/`transformMany()` directly, call `clearCache()` yourself (see [Cache Auto-Clear](#cache-auto-clear))
+
 ### Basic Usage
 
 ```typescript
@@ -233,7 +237,7 @@ You can specify multiple keys: `new Cache(fn, "id", "type")`
 
 ### Cache Auto-Clear
 
-By default, caches clear after each transformation when using the framework middleware (which calls `_transform`/`_transformMany` internally). When using `transform()`/`transformMany()` directly, call `clearCache()` manually or use `_transform`/`_transformMany`. Disable auto-clear with:
+By default, caches clear after each transformation when using the framework middleware. When using `transform()`/`transformMany()` directly, call `clearCache()` manually. Disable auto-clear with:
 
 ```typescript
 class MyTransformer extends AbstractTransformer<Input, Output> {
