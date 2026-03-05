@@ -6,7 +6,7 @@
 		"name": "Torben Koehler"
 	},
 	"license": "MIT-NSR",
-	"version": "0.6.9",
+	"version": "0.7.0",
 	"description": "Transformer for Elysia and Hono",
 	"repository": {
 		"type": "git",
@@ -26,17 +26,23 @@
 			"import": "./dist/hono/index.js",
 			"require": "./dist/hono/index.js",
 			"types": "./dist/hono/index.d.ts"
+		},
+		"./elysia": {
+			"import": "./dist/elysia/index.js",
+			"require": "./dist/elysia/index.js",
+			"types": "./dist/elysia/index.d.ts"
 		}
 	},
 	"typesVersions": {
 		"*": {
-			"hono": ["./dist/hono/index.d.ts"]
+			"hono": ["./dist/hono/index.d.ts"],
+			"elysia": ["./dist/elysia/index.d.ts"]
 		}
 	},
 	"types": "dist/index.d.ts",
 	"files": ["dist"],
 	"scripts": {
-		"build": "tsc --declaration --emitDeclarationOnly --outDir dist && NODE_ENV=production bun build src/index.ts src/hono/index.ts --outdir dist --target node --external hono",
+		"build": "tsc --declaration --emitDeclarationOnly --outDir dist && NODE_ENV=production bun build src/index.ts src/hono/index.ts src/elysia/index.ts --outdir dist --target node --external hono --external elysia",
 		"dev": "bun --watch src/index.ts",
 		"format": "biome format --write",
 		"lint": "biome lint && biome check",
@@ -50,6 +56,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "2.1.2",
 		"@types/bun": "latest",
+		"elysia": "^1.2",
 		"hono": "^4"
 	},
 	"peerDependencies": {
