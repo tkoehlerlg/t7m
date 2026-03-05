@@ -6,13 +6,13 @@
       "name": "t7m",
       "devDependencies": {
         "@biomejs/biome": "2.1.2",
-        "@types/bun": "latest",
+        "@types/bun": "^1.2.17",
         "elysia": "^1.2",
         "hono": "^4",
       },
       "peerDependencies": {
         "elysia": "^1.2",
-        "hono": "",
+        "hono": "^4",
         "typescript": "^5",
       },
       "optionalPeers": [
