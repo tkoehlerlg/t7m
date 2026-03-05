@@ -10,6 +10,18 @@ Works with Hono and Elysia. No overhead — 1,000 objects with includes in under
 
 *t7m = t(ransfor)m - 7 letters between t and m*
 
+## AI Agent Skill
+
+t7m ships with a [Claude Code skill](https://code.claude.com/docs/en/skills) that teaches AI coding agents how to build transformers correctly — includes, cache, props, nested transformers, and framework integration.
+
+Install it with the [Vercel Skills CLI](https://github.com/vercel-labs/skills):
+
+```bash
+npx skills add tkoehlerlg/t7m
+```
+
+This works with Claude Code, Cursor, Codex, and other agents that support the open agent skills standard.
+
 ## Quick Start
 
 ```bash
