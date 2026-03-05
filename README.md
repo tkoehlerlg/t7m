@@ -155,6 +155,7 @@ t7m exports utility types for extracting type information from transformer insta
 
 | Type | Description |
 |------|-------------|
+| `AnyAbstractTransformer` | Base type for typing transformer collections and generic utilities |
 | `InputOf<T>` | Extract the input type from a transformer |
 | `OutputOf<T>` | Extract the output type from a transformer |
 | `PropsOf<T>` | Extract the props type from a transformer |
