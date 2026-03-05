@@ -1,6 +1,6 @@
 # CLAUDE.md — t7m
 
-TypeScript library for API output transformation. Dual export: `t7m` (core) + `t7m/hono` (middleware).
+TypeScript library for API output transformation. Triple export: `t7m` (core) + `t7m/hono` (middleware) + `t7m/elysia` (plugin).
 
 ## Commands
 
@@ -55,8 +55,8 @@ dist/                          # Build output (git-ignored)
 ### 1. `transform()` vs `_transform()`
 
 - `transform()` / `transformMany()`: Public API. Props conditionally required.
-- `_transform()` / `_transformMany()`: Used by Hono middleware. Props always required. Handles cache lifecycle.
-- Don't confuse them — the Hono middleware calls `_transform()`, not `transform()`.
+- `_transform()` / `_transformMany()`: Used by Hono middleware and Elysia plugin. Props always required. Handles cache lifecycle.
+- Don't confuse them — both Hono middleware and Elysia plugin call `_transform()`, not `transform()`.
 
 ### 2. All transform methods take a params OBJECT
 
