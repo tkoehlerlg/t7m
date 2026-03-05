@@ -854,11 +854,10 @@ describe('SubTransformer Tests', () => {
 			expect(clearLog.indexOf('child:clear')).toBeGreaterThan(clearLog.indexOf('child:data'))
 		})
 
-		it('should restore child clearCacheOnTransform after parent completes', async () => {
+		it('should not mutate child clearCacheOnTransform during parent transform', async () => {
 			resetClearLog()
 			resetFetchCounts()
 
-			// Child with clearCacheOnTransform: true (default would be true, but we set explicitly)
 			class RestoredChildTransformer extends AbstractTransformer<Author, AuthorOutput> {
 				constructor() {
 					super({ clearCacheOnTransform: true })
@@ -906,7 +905,7 @@ describe('SubTransformer Tests', () => {
 				includes: ['author'],
 			})
 
-			// After transform completes, child's clearCacheOnTransform should be restored to true
+			// clearCacheOnTransform is readonly — it should remain true throughout
 			expect(getChildClearCache()).toBe(true)
 		})
 
