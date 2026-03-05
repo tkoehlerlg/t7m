@@ -2,9 +2,9 @@
 
 [![npm version](https://img.shields.io/npm/v/t7m.svg)](https://www.npmjs.com/package/t7m) ![TypeScript 5+](https://img.shields.io/badge/TypeScript-5%2B-blue.svg) [![license](https://img.shields.io/badge/license-MIT--NSR-green.svg)](LICENSE)
 
-Type-safe output transformers for Hono and Elysia APIs — sanitize data, handle includes, cache expensive operations.
+Type-safe output transformers for Hono and Elysia APIs - sanitize data, handle includes, cache expensive operations.
 
-*t7m = t(ransfor)m — 7 letters between t and m*
+*t7m = t(ransfor)m - 7 letters between t and m*
 
 ## Quick Start
 
@@ -29,18 +29,18 @@ class UserTransformer extends AbstractTransformer<User, PublicUser> {
 const transformer = new UserTransformer();
 const user: User = { id: 1, name: "Alice", email: "alice@example.com", password: "secret" };
 const result = await transformer.transform({ input: user });
-// { name: "Alice", email: "alice@example.com" } — sensitive fields stripped!
+// { name: "Alice", email: "alice@example.com" } - sensitive fields stripped!
 ```
 
 ## Why t7m?
 
 ### The Problem
 
-Database models contain sensitive data you shouldn't expose (IDs, passwords, internal flags). Every API endpoint needs to strip fields, optionally include related data, and do this consistently. Without structure, transformation logic scatters across your codebase — easy to forget a field, expose something you shouldn't, or handle includes inconsistently.
+Database models contain sensitive data you shouldn't expose (IDs, passwords, internal flags). Every API endpoint needs to strip fields, optionally include related data, and do this consistently. Without structure, transformation logic scatters across your codebase - easy to forget a field, expose something you shouldn't, or handle includes inconsistently.
 
 ### The Solution
 
-t7m gives you a single place to define how each model transforms to its public form. Type-safe, consistent, with built-in support for optional includes and caching. Works anywhere — built with serverless in mind.
+t7m gives you a single place to define how each model transforms to its public form. Type-safe, consistent, with built-in support for optional includes and caching. Works anywhere - built with serverless in mind.
 
 ## Basic Usage
 
@@ -78,7 +78,7 @@ const publicUser = await transformer.transform({ input: user });
 
 ### Includes
 
-Includes let you optionally add related data to your output (like posts for a user, or author for a comment). Define handlers in `includesMap` — they only run when requested. All include functions run in parallel.
+Includes let you optionally add related data to your output (like posts for a user, or author for a comment). Define handlers in `includesMap` - they only run when requested. All include functions run in parallel.
 
 ```typescript
 // Third generic = Props type (passed to data and include functions)
@@ -161,7 +161,7 @@ type UserOutput = OutputOf<UserTransformer>; // PublicUser
 
 ## Cache
 
-When transforming data, you often need to enrich it with external information. Cache wraps any function and ensures calls with the same input resolve only once. Concurrent calls share the same promise — no duplicate requests, no race conditions.
+When transforming data, you often need to enrich it with external information. Cache wraps any function and ensures calls with the same input resolve only once. Concurrent calls share the same promise - no duplicate requests, no race conditions.
 
 ### Basic Usage
 
@@ -193,7 +193,7 @@ await transformer.transformMany({ inputs: comments, includes: ["author"] });
 
 ### Zero-Argument Functions
 
-Cache supports 0-arg functions — useful for deferring transformer instantiation (e.g., to avoid circular dependencies or reduce startup cost):
+Cache supports 0-arg functions - useful for deferring transformer instantiation (e.g., to avoid circular dependencies or reduce startup cost):
 
 ```typescript
 class ParentTransformer extends AbstractTransformer<Parent, PublicParent> {
@@ -237,7 +237,7 @@ class MyTransformer extends AbstractTransformer<Input, Output> {
 
 ### Nested Transformer Cache Clearing
 
-Register nested transformers in `transformers` for cache clearing propagation. Parent clears all caches only after transformation completes — handled internally:
+Register nested transformers in `transformers` for cache clearing propagation. Parent clears all caches only after transformation completes - handled internally:
 
 ```typescript
 class PostTransformer extends AbstractTransformer<Post, PublicPost> {
@@ -251,7 +251,7 @@ class PostTransformer extends AbstractTransformer<Post, PublicPost> {
 }
 ```
 
-Circular references between transformers are handled safely — cache clearing uses cycle detection to prevent infinite loops.
+Circular references between transformers are handled safely - cache clearing uses cycle detection to prevent infinite loops.
 
 ## Framework Integration
 
@@ -286,7 +286,7 @@ GET /users?include=posts,comments
 // Automatically applies includes: ["posts", "comments"]
 ```
 
-No additional code needed — just use the middleware.
+No additional code needed - just use the middleware.
 
 #### Extras
 
