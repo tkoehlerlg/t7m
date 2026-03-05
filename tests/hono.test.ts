@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, spyOn } from 'bun:test'
+import { afterAll, afterEach, beforeAll, describe, expect, it, spyOn } from 'bun:test'
 import { Hono } from 'hono'
 import { AbstractTransformer } from '../src'
 import { t7mMiddleware } from '../src/hono'
@@ -327,6 +327,13 @@ describe('t7mMiddleware', () => {
 	// 8. debug option
 	// -------------------------------------------------------
 	describe('debug option', () => {
+		beforeAll(() => {
+			process.env.T7M_DEBUG = 'true'
+		})
+		afterAll(() => {
+			delete process.env.T7M_DEBUG
+		})
+
 		it('should call console.log when debug is true for c.transform()', async () => {
 			const transformer = new UserTransformer()
 			const app = new Hono()

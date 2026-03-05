@@ -3,7 +3,7 @@ import { Cache } from '../src/lib/cache'
 
 describe('Cache edge cases', () => {
 	describe('Rejected promise caching', () => {
-		it('should cache a rejected promise and return it on subsequent calls', async () => {
+		it('should share the same rejected promise for concurrent calls before rejection settles', async () => {
 			let callCount = 0
 			const fn = async () => {
 				callCount++
@@ -14,6 +14,7 @@ describe('Cache edge cases', () => {
 			const promise1 = cache.call()
 			const promise2 = cache.call()
 
+			// Before rejection settles, concurrent calls share the same promise
 			expect(promise1).toBe(promise2)
 			expect(callCount).toBe(1)
 
@@ -21,19 +22,23 @@ describe('Cache edge cases', () => {
 			await expect(promise2).rejects.toThrow('fail')
 		})
 
-		it('should not re-execute function after rejection', async () => {
+		it('should auto-evict rejected promise and retry on next call', async () => {
 			let callCount = 0
-			const fn = async (key: string) => {
+			const fn = async (_key: string) => {
 				callCount++
-				throw new Error('rejected')
+				if (callCount <= 1) throw new Error('transient')
+				return 'recovered'
 			}
 			const cache = new Cache(fn)
 
-			await expect(cache.call('a')).rejects.toThrow('rejected')
-			await expect(cache.call('a')).rejects.toThrow('rejected')
-			await expect(cache.call('a')).rejects.toThrow('rejected')
-
+			// First call fails
+			await expect(cache.call('a')).rejects.toThrow('transient')
 			expect(callCount).toBe(1)
+
+			// After rejection settles, the entry is evicted — next call retries
+			const result = await cache.call('a')
+			expect(result).toBe('recovered')
+			expect(callCount).toBe(2)
 		})
 	})
 
@@ -116,8 +121,8 @@ describe('Cache edge cases', () => {
 		})
 	})
 
-	describe('Nested object serialization collision', () => {
-		it('should collide objects with different nested values due to [object Object] serialization', async () => {
+	describe('Nested object serialization', () => {
+		it('should NOT collide objects with different nested values thanks to JSON serialization', async () => {
 			let callCount = 0
 			const fn = async (obj: { id: number; data: object }) => {
 				callCount++
@@ -131,10 +136,162 @@ describe('Cache edge cases', () => {
 			const r1 = await cache.call(obj1)
 			const r2 = await cache.call(obj2)
 
-			// Both nested objects serialize to "[object Object]", so cache keys collide
+			// JSON.stringify properly serializes nested objects, so cache keys do NOT collide
 			expect(r1).toBe(obj1)
-			expect(r2).toBe(obj1) // returns cached obj1, not obj2
+			expect(r2).toBe(obj2)
+			expect(callCount).toBe(2)
+		})
+	})
+
+	describe('Primitive type-aware cache keys', () => {
+		it('should NOT collide number 42 and string "42"', async () => {
+			let callCount = 0
+			const fn = async (arg: unknown) => {
+				callCount++
+				return arg
+			}
+			const cache = new Cache(fn as (arg: any) => any)
+
+			const r1 = await cache.call(42)
+			const r2 = await cache.call('42')
+
+			expect(r1).toBe(42)
+			expect(r2).toBe('42')
+			expect(callCount).toBe(2)
+		})
+
+		it('should NOT collide boolean true and string "true"', async () => {
+			let callCount = 0
+			const fn = async (arg: unknown) => {
+				callCount++
+				return arg
+			}
+			const cache = new Cache(fn as (arg: any) => any)
+
+			const r1 = await cache.call(true)
+			const r2 = await cache.call('true')
+
+			expect(r1).toBe(true)
+			expect(r2).toBe('true')
+			expect(callCount).toBe(2)
+		})
+	})
+
+	describe('Object delimiter injection', () => {
+		it('should NOT collide objects with delimiter-like values', async () => {
+			let callCount = 0
+			const fn = async (obj: Record<string, unknown>) => {
+				callCount++
+				return obj
+			}
+			const cache = new Cache(fn)
+
+			const obj1 = { a: '1|b:2' }
+			const obj2 = { a: '1', b: '2' }
+
+			const r1 = await cache.call(obj1)
+			const r2 = await cache.call(obj2)
+
+			expect(r1).toBe(obj1)
+			expect(r2).toBe(obj2)
+			expect(callCount).toBe(2)
+		})
+	})
+
+	describe('Nested object distinction', () => {
+		it('should NOT collide objects with different nested data', async () => {
+			let callCount = 0
+			const fn = async (obj: { data: { x: number } }) => {
+				callCount++
+				return obj
+			}
+			const cache = new Cache(fn)
+
+			const obj1 = { data: { x: 1 } }
+			const obj2 = { data: { x: 2 } }
+
+			const r1 = await cache.call(obj1)
+			const r2 = await cache.call(obj2)
+
+			expect(r1).toBe(obj1)
+			expect(r2).toBe(obj2)
+			expect(callCount).toBe(2)
+		})
+	})
+
+	describe('maxSize eviction', () => {
+		it('should evict oldest entry when cache exceeds maxSize', async () => {
+			let callCount = 0
+			const fn = async (key: string) => {
+				callCount++
+				return `value-${key}`
+			}
+			const cache = new Cache(fn)
+			cache.maxSize = 3
+
+			await cache.call('a')
+			await cache.call('b')
+			await cache.call('c')
+			expect(callCount).toBe(3)
+
+			// Adding 4th entry should evict 'a' (oldest)
+			await cache.call('d')
+			expect(callCount).toBe(4)
+
+			// 'a' was evicted, so calling it again re-executes the function
+			await cache.call('a')
+			expect(callCount).toBe(5)
+
+			// 'c' and 'd' should still be cached
+			await cache.call('c')
+			await cache.call('d')
+			expect(callCount).toBe(5)
+		})
+
+		it('should work correctly with maxSize = 1', async () => {
+			let callCount = 0
+			const fn = async (key: number) => {
+				callCount++
+				return key * 10
+			}
+			const cache = new Cache(fn)
+			cache.maxSize = 1
+
+			await cache.call(1)
 			expect(callCount).toBe(1)
+
+			// Same key is still cached
+			await cache.call(1)
+			expect(callCount).toBe(1)
+
+			// New key evicts old
+			await cache.call(2)
+			expect(callCount).toBe(2)
+
+			// Old key is gone
+			await cache.call(1)
+			expect(callCount).toBe(3)
+		})
+
+		it('should not limit cache size when maxSize is not set', async () => {
+			let callCount = 0
+			const fn = async (key: number) => {
+				callCount++
+				return key
+			}
+			const cache = new Cache(fn)
+
+			// Add many entries without maxSize
+			for (let i = 0; i < 100; i++) {
+				await cache.call(i)
+			}
+			expect(callCount).toBe(100)
+
+			// All should still be cached
+			for (let i = 0; i < 100; i++) {
+				await cache.call(i)
+			}
+			expect(callCount).toBe(100)
 		})
 	})
 

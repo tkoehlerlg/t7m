@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { AbstractTransformer, AnyAbstractTransformer } from '../src/abstractTransformer'
+import { AbstractTransformer } from '../src/abstractTransformer'
 import { Cache } from '../src/lib/cache'
 
 // ─── Test Data Types ────────────────────────────────────────────────

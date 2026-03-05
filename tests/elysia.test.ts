@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, spyOn } from 'bun:test'
+import { afterAll, afterEach, beforeAll, describe, expect, it, spyOn } from 'bun:test'
 import { Elysia } from 'elysia'
 import { AbstractTransformer, Cache } from '../src'
 import { t7mPlugin } from '../src/elysia'
@@ -299,6 +299,13 @@ describe('t7mPlugin (Elysia)', () => {
 	// 8. debug option
 	// -------------------------------------------------------
 	describe('debug option', () => {
+		beforeAll(() => {
+			process.env.T7M_DEBUG = 'true'
+		})
+		afterAll(() => {
+			delete process.env.T7M_DEBUG
+		})
+
 		it('should call console.log when debug is true for transform()', async () => {
 			const transformer = new UserTransformer()
 			const app = new Elysia()
