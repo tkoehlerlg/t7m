@@ -16,7 +16,6 @@ interface PublicUser {
 	name: string
 	email: string
 	avatar?: string
-	// biome-ignore lint/suspicious/noExplicitAny: Just for this test case
 	metadata?: Record<string, any>
 }
 

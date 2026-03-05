@@ -66,7 +66,6 @@ describe('Cache edge cases', () => {
 				callCount++
 				return arg
 			}
-			// biome-ignore lint/suspicious/noExplicitAny: testing edge case with mixed argument types
 			const cache = new Cache(fn as (arg: any) => any)
 
 			const r1 = await cache.call(null)
@@ -85,7 +84,6 @@ describe('Cache edge cases', () => {
 				callCount++
 				return arg
 			}
-			// biome-ignore lint/suspicious/noExplicitAny: testing edge case with mixed argument types
 			const cache = new Cache(fn as (arg: any) => any)
 
 			const r1 = await cache.call(null)
@@ -105,7 +103,6 @@ describe('Cache edge cases', () => {
 				callCount++
 				return arg
 			}
-			// biome-ignore lint/suspicious/noExplicitAny: testing edge case with mixed argument types
 			const cache = new Cache(fn as (arg: any) => any)
 
 			const r1 = await cache.call(undefined)
