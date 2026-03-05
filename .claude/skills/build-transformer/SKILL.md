@@ -101,4 +101,5 @@ new Cache(fn, { clearCacheOnTransform: false })
 ## Detailed Patterns
 
 - For includes, props, cache, nested transformers, and access modifiers, see [reference.md](reference.md)
+- For concurrency control (throttling external API calls), see [reference.md — Concurrency Control](reference.md#concurrency-control)
 - For Hono middleware integration and route patterns, see [hono.md](hono.md)

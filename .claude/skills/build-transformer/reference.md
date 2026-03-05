@@ -182,3 +182,72 @@ type UserOutput = OutputOf<UserTransformer>   // PublicUser
 type UserProps = PropsOf<UserTransformer>     // { db: Database }
 type UserInc = IncludesOf<UserTransformer>    // 'posts' | 'avatar'
 ```
+
+## Concurrency Control
+
+By default, `transformMany` processes all items and includes in parallel via `Promise.all`. This is fast, but can overwhelm external services with rate limits or connection ceilings.
+
+### When You Need This
+
+- **Cloudflare Workers**: Hard limit of 6 concurrent subrequests per request
+- **Auth providers** (Clerk, Auth0): Rate limits on API calls
+- **Third-party APIs**: Connection ceilings, rate limiting
+
+### When You Don't
+
+- **Database with connection pooling** (e.g., Neon): The pool manages concurrency for you — no flood of parallel connections
+- **In-memory lookups**: No external calls, no limits
+- **Already-cached calls**: t7m's `Cache` deduplicates — 100 items with 20 unique authors = 20 actual calls
+
+### Item-Level Concurrency
+
+Limit how many items `transformMany` / `_transformMany` process in parallel:
+
+```typescript
+class CommentTransformer extends AbstractTransformer<Comment, PublicComment> {
+	constructor() {
+		super({ concurrency: 5 }) // 5 items at a time
+	}
+}
+```
+
+Does **not** apply to `transform()` / `_transform()` (single item — nothing to throttle).
+
+### Per-Include Concurrency
+
+Limit how many times a specific include runs concurrently. Unlike `concurrency`, per-include limits apply to **all** transform methods — both `transform()` and `transformMany()`:
+
+```typescript
+class CommentTransformer extends AbstractTransformer<Comment, PublicComment> {
+	includesConcurrency = {
+		author: 3, // Max 3 concurrent author lookups
+	}
+
+	includesMap = {
+		author: async (input: Comment) => {
+			const user = await auth.getUser(input.userId)
+			return { name: user.name }
+		},
+	}
+}
+```
+
+`includesConcurrency` is a **class property** (like `includesMap`), not a constructor param.
+
+### Combined
+
+```typescript
+class CommentTransformer extends AbstractTransformer<Comment, PublicComment> {
+	constructor() {
+		super({ concurrency: 10 }) // 10 items in parallel
+	}
+
+	includesConcurrency = {
+		author: 5, // Max 5 concurrent auth calls
+	}
+
+	// ...includesMap, cache, etc.
+}
+```
+
+Limits are instance-level — shared across all calls on the same transformer instance.

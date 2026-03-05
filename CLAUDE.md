@@ -29,16 +29,22 @@ TypeScript library for API output transformation. Dual export: `t7m` (core) + `t
 ```
 src/
 ├── abstractTransformer.ts    # Core transformer base class
-├── cache.ts                  # Cache utility
-├── types.ts                  # OnlyPossiblyUndefined helper
-├── typeHelper.ts             # InputOf, OutputOf, PropsOf, IncludesOf
+├── types.ts                  # InputOf, OutputOf, PropsOf, IncludesOf
 ├── index.ts                  # Entry: t7m
-├── semaphore.ts              # Async semaphore for concurrency control
-└── hono/
-    ├── middleware.ts          # t7mMiddleware
-    ├── augment.ts             # Hono Context type augmentation
-    ├── types.ts               # Hono-specific types
-    └── index.ts               # Entry: t7m/hono
+├── lib/
+│   ├── cache.ts              # Cache utility
+│   ├── semaphore.ts          # Async semaphore for concurrency control
+│   ├── types.ts              # OnlyPossiblyUndefined helper
+│   └── log.ts                # Shared logging utility
+├── hono/
+│   ├── middleware.ts          # t7mMiddleware
+│   ├── augment.ts             # Hono Context type augmentation
+│   ├── types.ts               # Hono-specific types
+│   └── index.ts               # Entry: t7m/hono
+└── elysia/
+    ├── plugin.ts              # Elysia plugin
+    ├── types.ts               # Elysia-specific types
+    └── index.ts               # Entry: t7m/elysia
 
 tests/                         # Bun test runner
 dist/                          # Build output (git-ignored)

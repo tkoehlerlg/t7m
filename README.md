@@ -19,7 +19,7 @@ bun add t7m
 ```
 
 ```typescript
-import { AbstractTransformer } from "t7m";
+import { AbstractTransformer } from 't7m';
 
 type User = { id: number; name: string; email: string; password: string };
 type PublicUser = Omit<User, "id" | "password">;
@@ -53,7 +53,7 @@ t7m gives you a single place to define how each model transforms to its public f
 Extend `AbstractTransformer` and implement the `data` method:
 
 ```typescript
-import { AbstractTransformer } from "t7m";
+import { AbstractTransformer } from 't7m';
 
 interface User {
   id: number;
@@ -161,7 +161,7 @@ t7m exports utility types for extracting type information from transformer insta
 | `IncludesOf<T>` | Extract the available include keys from a transformer |
 
 ```typescript
-import type { InputOf, OutputOf } from "t7m";
+import type { InputOf, OutputOf } from 't7m';
 
 type UserInput = InputOf<UserTransformer>;   // User
 type UserOutput = OutputOf<UserTransformer>; // PublicUser
@@ -178,7 +178,7 @@ When transforming data, you often need to enrich it with external information. C
 ### Basic Usage
 
 ```typescript
-import { AbstractTransformer, Cache } from "t7m";
+import { AbstractTransformer, Cache } from 't7m';
 
 class CommentTransformer extends AbstractTransformer<Comment, PublicComment> {
   cache = {
@@ -272,8 +272,8 @@ Circular references between transformers are handled safely - cache clearing use
 #### Setup
 
 ```typescript
-import { Hono } from "hono";
-import { t7mMiddleware } from "t7m/hono";
+import { Hono } from 'hono';
+import { t7mMiddleware } from 't7m/hono';
 
 const app = new Hono();
 app.use(t7mMiddleware);
@@ -359,7 +359,19 @@ Concurrent calls with the same input don't even wait — they share a single in-
 
 ### The Problem
 
-`transformMany` processes all items in parallel via `Promise.all`, and each item's includes also run in parallel. This is great for speed, but when includes make external API calls (e.g., auth providers, third-party APIs), hundreds of concurrent requests can overwhelm rate limits or hit connection ceilings.
+`transformMany` fires all items and their includes in parallel via `Promise.all`. With 100 items and 2 includes each, that's up to 200 concurrent external calls in a single request. This overwhelms services that weren't designed for that kind of burst:
+
+- **Cloudflare Workers**: Hard limit of 6 concurrent subrequests per request — anything beyond throws
+- **Auth providers** (Clerk, Auth0): Rate limits on API calls that trigger 429s under burst traffic
+- **Third-party APIs**: Connection ceilings, per-second rate limiting, or socket exhaustion
+
+### When You Don't Need This
+
+Concurrency control is opt-in. You can skip it entirely when:
+
+- **Database with connection pooling** (e.g., Neon): The pool manages concurrency for you — includes all go through one pooled connection, so there's no flood of parallel connections
+- **In-memory lookups**: No external calls means no limits to hit
+- **Already-cached calls**: If you're using t7m's `Cache`, duplicate calls are deduplicated — 100 items with 20 unique authors = 20 actual calls, not 100
 
 ### Item-Level Concurrency
 
@@ -382,7 +394,7 @@ This does **not** apply to `transform` / `_transform` (single item — nothing t
 
 ### Per-Include Concurrency
 
-The `includesConcurrency` property limits how many times a specific include function can run concurrently across all items. Include keys not listed remain unlimited:
+The `includesConcurrency` class property limits how many times a specific include function can run concurrently. Unlike `concurrency`, per-include limits apply to **all** transform methods — both `transform()` and `transformMany()`. Include keys not listed remain unlimited:
 
 ```typescript
 class CommentTransformer extends AbstractTransformer<Comment, PublicComment> {
@@ -449,11 +461,13 @@ class CommentTransformer extends AbstractTransformer<Comment, PublicComment, { d
 | Member | Type | Description |
 |--------|------|-------------|
 | `data(input, props)` | `protected abstract` | Core transformation logic (must implement). Can return `TOutput` or `Promise<TOutput>`. |
-| `includesMap` | `protected` | Map of include handlers. Each handler receives `(input, props, forwardedIncludes)`. |
+| `includesMap` | `protected readonly` | Map of include handlers. Each handler receives `(input, props, forwardedIncludes)`. |
 | `cache` | `public readonly` | Record of Cache instances for data fetching. |
 | `transformers` | `public` | Register nested transformers for cache clearing propagation. |
 | `transform({input, includes?, unsafeIncludes?, props?*})` | `public` | Transform a single object. |
 | `transformMany({inputs, includes?, unsafeIncludes?, props?*})` | `public` | Transform an array of objects. |
+| `includesConcurrency` | `protected readonly` | Limits concurrent executions per include key. Applies to all transform methods. Define as class property. |
+| `concurrency` (constructor) | `constructor param` | Limits how many items `transformMany` processes in parallel. Pass via `super({ concurrency: N })`. |
 | `clearCache()` | `public` | Clear all caches (including nested transformers). |
 
 \*`props` is required when the transformer defines a Props type, optional otherwise.
@@ -465,6 +479,13 @@ class CommentTransformer extends AbstractTransformer<Comment, PublicComment, { d
 | `new Cache(fn, ...keys)` | Create a cache. `fn` must take 0 or 1 argument. `keys` specifies which object properties to use as cache key (optional, accepts multiple keys). |
 | `call(...args)` | Call the cached function. Same-input calls return cached result. Concurrent calls share the same promise. |
 | `clear()` | Clear all cached results. |
+
+### Semaphore
+
+| Method | Description |
+|--------|-------------|
+| `new Semaphore(limit)` | Create a semaphore with given concurrency limit. `limit` must be a positive integer. |
+| `run(fn)` | Execute `fn` (sync or async) when a slot is available. Returns `Promise<T>`. Queues if at capacity. |
 
 ## Author
 
