@@ -2,9 +2,11 @@
 
 [![npm version](https://img.shields.io/npm/v/t7m.svg)](https://www.npmjs.com/package/t7m) ![TypeScript 5+](https://img.shields.io/badge/TypeScript-5%2B-blue.svg) [![license](https://img.shields.io/badge/license-MIT--NSR-green.svg)](LICENSE)
 
-Type-safe output transformers for Hono and Elysia APIs.
+APIs shouldn't return raw database models. Sensitive fields leak, related data loads slowly, and the same async call runs over and over.
 
-Strip sensitive fields, resolve related data with parallel includes, and deduplicate expensive calls with built-in caching - all from a single transformer definition per model.
+t7m is a transformer layer that fixes this: one class per model controls what gets exposed, loads includes in parallel, and caches repeated calls.
+
+Works with Hono (Elysia coming soon). No overhead — 1,000 objects with includes in under 100ms.
 
 *t7m = t(ransfor)m - 7 letters between t and m*
 
