@@ -1,20 +1,9 @@
 import { createMiddleware } from 'hono/factory'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
-import { AnyAbstractTransformer } from '../abstractTransformer'
-import { IncludesOf, InputOf, OutputOf, PropsOf } from '../typeHelper'
+import type { AnyAbstractTransformer } from '../abstractTransformer'
+import { log } from '../lib/log'
+import type { IncludesOf, InputOf, OutputOf, PropsOf } from '../types'
 import type { HeaderRecord, JSONRespondReturn } from './types'
-
-const T7M_PREFIX = '\x1b[36m[T7M]\x1b[0m'
-
-const log = (message: string, data?: unknown, transformerName?: string) => {
-	const nameTag = transformerName ? `\x1b[33m[${transformerName}]\x1b[0m` : ''
-	if (data !== undefined) {
-		const jsonData = typeof data === 'string' ? data : JSON.stringify(data, null, 2).substring(0, 300)
-		console.log(T7M_PREFIX, nameTag, message, jsonData)
-	} else {
-		console.log(T7M_PREFIX, nameTag, message)
-	}
-}
 
 export const t7mMiddleware = createMiddleware(async (c, next) => {
 	const { include } = c.req.query()

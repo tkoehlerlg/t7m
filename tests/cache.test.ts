@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { Cache } from '../src/cache'
+import { Cache } from '../src/lib/cache'
 
 describe('Cache', () => {
 	// Helper to create a mock async function with invocation counter

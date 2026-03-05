@@ -6,6 +6,7 @@ on:
       - main
     tags-ignore:
       - 'v*'
+  pull_request:
 
 jobs:
   ci:

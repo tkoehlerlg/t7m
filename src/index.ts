@@ -1,4 +1,4 @@
 export { AbstractTransformer } from './abstractTransformer'
-export { Cache } from './cache'
-export { Semaphore } from './semaphore'
-export type { IncludesOf, InputOf, OutputOf, PropsOf } from './typeHelper'
+export { Cache } from './lib/cache'
+export { Semaphore } from './lib/semaphore'
+export type { IncludesOf, InputOf, OutputOf, PropsOf } from './types'
