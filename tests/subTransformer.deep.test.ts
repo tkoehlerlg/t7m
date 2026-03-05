@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'bun:test'
+import { describe, expect, it, spyOn } from 'bun:test'
 import { AbstractTransformer } from '../src/abstractTransformer'
 import { Cache } from '../src/lib/cache'
 
@@ -484,6 +484,143 @@ describe('SubTransformer Deep Tests', () => {
 			expect(results[0]!.author!.name).toBe('Alice')
 			// Orphan post has no author
 			expect(results[1]!.author).toBeUndefined()
+		})
+	})
+
+	// ─── 4. Concurrent _transform + _transformMany (activeTransforms counter) ───
+	describe('Concurrent _transform + _transformMany', () => {
+		it('should not clear cache until all concurrent _transform calls complete', async () => {
+			let resolve1!: () => void
+			let resolve2!: () => void
+			const deferred1 = new Promise<void>(r => {
+				resolve1 = r
+			})
+			const deferred2 = new Promise<void>(r => {
+				resolve2 = r
+			})
+
+			class SlowTransformer extends AbstractTransformer<number, { val: number; slow?: string }> {
+				data(input: number) {
+					return { val: input }
+				}
+
+				includesMap = {
+					slow: async (input: number) => {
+						if (input === 1) await deferred1
+						else await deferred2
+						return `slow-${input}`
+					},
+				}
+			}
+
+			const transformer = new SlowTransformer()
+			const clearSpy = spyOn(transformer, 'clearCache')
+
+			// Start two concurrent _transform calls
+			const p1 = transformer._transform({ input: 1, props: undefined, unsafeIncludes: ['slow'] })
+			const p2 = transformer._transform({ input: 2, props: undefined, unsafeIncludes: ['slow'] })
+
+			// Complete first transform
+			resolve1()
+			await p1
+
+			// Cache should NOT have been cleared yet (activeTransforms still > 0)
+			expect(clearSpy).not.toHaveBeenCalled()
+
+			// Complete second transform
+			resolve2()
+			await p2
+
+			// Now cache should have been cleared (activeTransforms reached 0)
+			expect(clearSpy).toHaveBeenCalledTimes(1)
+		})
+
+		it('should not clear cache during concurrent _transform and _transformMany', async () => {
+			let resolveSingle!: () => void
+			let resolveMany!: () => void
+			const deferredSingle = new Promise<void>(r => {
+				resolveSingle = r
+			})
+			const deferredMany = new Promise<void>(r => {
+				resolveMany = r
+			})
+
+			class SlowTransformer extends AbstractTransformer<number, { val: number; slow?: string }> {
+				data(input: number) {
+					return { val: input }
+				}
+
+				includesMap = {
+					slow: async (input: number) => {
+						if (input === 1) await deferredSingle
+						else await deferredMany
+						return `slow-${input}`
+					},
+				}
+			}
+
+			const transformer = new SlowTransformer()
+			const clearSpy = spyOn(transformer, 'clearCache')
+
+			// Start _transform and _transformMany concurrently
+			const pSingle = transformer._transform({ input: 1, props: undefined, unsafeIncludes: ['slow'] })
+			const pMany = transformer._transformMany({
+				inputs: [2, 3],
+				props: undefined,
+				unsafeIncludes: ['slow'],
+			})
+
+			// Complete single transform first
+			resolveSingle()
+			await pSingle
+
+			// Cache should NOT have been cleared yet (_transformMany still active)
+			expect(clearSpy).not.toHaveBeenCalled()
+
+			// Complete many transform
+			resolveMany()
+			await pMany
+
+			// Now cache should have been cleared (all transforms done)
+			expect(clearSpy).toHaveBeenCalledTimes(1)
+		})
+
+		it('should produce correct results from concurrent transforms', async () => {
+			let resolve1!: () => void
+			let resolve2!: () => void
+			const deferred1 = new Promise<void>(r => {
+				resolve1 = r
+			})
+			const deferred2 = new Promise<void>(r => {
+				resolve2 = r
+			})
+
+			class SlowTransformer extends AbstractTransformer<number, { val: number; slow?: string }> {
+				data(input: number) {
+					return { val: input }
+				}
+
+				includesMap = {
+					slow: async (input: number) => {
+						if (input === 1) await deferred1
+						else await deferred2
+						return `slow-${input}`
+					},
+				}
+			}
+
+			const transformer = new SlowTransformer()
+
+			const p1 = transformer._transform({ input: 1, props: undefined, unsafeIncludes: ['slow'] })
+			const p2 = transformer._transform({ input: 2, props: undefined, unsafeIncludes: ['slow'] })
+
+			// Resolve in reverse order
+			resolve2()
+			resolve1()
+
+			const [r1, r2] = await Promise.all([p1, p2])
+			expect(r1).toEqual({ val: 1, slow: 'slow-1' })
+			expect(r2).toEqual({ val: 2, slow: 'slow-2' })
 		})
 	})
 })

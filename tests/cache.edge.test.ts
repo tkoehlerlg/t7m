@@ -295,6 +295,58 @@ describe('Cache edge cases', () => {
 		})
 	})
 
+	describe('maxSize edge cases (0 and negative)', () => {
+		it('should treat maxSize=0 as unlimited (no eviction)', async () => {
+			let callCount = 0
+			const fn = async (key: string) => {
+				callCount++
+				return `value-${key}`
+			}
+			const cache = new Cache(fn)
+			cache.maxSize = 0
+
+			await cache.call('a')
+			await cache.call('b')
+			await cache.call('c')
+			expect(callCount).toBe(3)
+
+			// All should still be cached
+			await cache.call('a')
+			await cache.call('b')
+			await cache.call('c')
+			expect(callCount).toBe(3)
+		})
+
+		it('should evict immediately with negative maxSize (every insert exceeds limit)', async () => {
+			let callCount = 0
+			const fn = async (key: string) => {
+				callCount++
+				return `value-${key}`
+			}
+			const cache = new Cache(fn)
+			cache.maxSize = -1
+
+			// First call: inserts then immediately evicts (cache.size 1 > -1)
+			await cache.call('a')
+			expect(callCount).toBe(1)
+
+			// Second call to same key: cache miss because entry was evicted
+			await cache.call('a')
+			expect(callCount).toBe(2)
+		})
+
+		it('should still return results with maxSize=0', async () => {
+			const fn = async (n: number) => n * 10
+			const cache = new Cache(fn)
+			cache.maxSize = 0
+
+			const r1 = await cache.call(5)
+			const r2 = await cache.call(5)
+			expect(r1).toBe(50)
+			expect(r2).toBe(50)
+		})
+	})
+
 	describe('clear() on empty cache', () => {
 		it('should not throw when clearing an empty cache', () => {
 			const fn = async () => 'result'

@@ -398,6 +398,48 @@ describe('t7mMiddleware', () => {
 	})
 
 	// -------------------------------------------------------
+	// 8b. debug gate without T7M_DEBUG env var
+	// -------------------------------------------------------
+	describe('debug gate without T7M_DEBUG env var', () => {
+		it('should not call console.log when debug is true but T7M_DEBUG is not set', async () => {
+			delete process.env.T7M_DEBUG
+
+			const transformer = new UserTransformer()
+			const app = new Hono()
+			app.use('*', t7mMiddleware)
+			app.get('/user', async c => {
+				return c.transform(testUser, transformer, { debug: true })
+			})
+
+			await app.request('/user')
+
+			expect(consoleSpy).not.toHaveBeenCalled()
+		})
+
+		it('should still transform correctly when debug is true but T7M_DEBUG is not set', async () => {
+			delete process.env.T7M_DEBUG
+
+			const transformer = new UserTransformer()
+			const app = new Hono()
+			app.use('*', t7mMiddleware)
+			app.get('/user', async c => {
+				return c.transform(testUser, transformer, { debug: true, includes: ['avatar'] })
+			})
+
+			const res = await app.request('/user')
+
+			expect(res.status).toBe(200)
+			const body = await res.json()
+			expect(body).toEqual({
+				name: 'Alice',
+				email: 'alice@example.com',
+				avatar: 'https://avatar.example.com/1',
+			})
+			expect(consoleSpy).not.toHaveBeenCalled()
+		})
+	})
+
+	// -------------------------------------------------------
 	// 9. Props forwarding
 	// -------------------------------------------------------
 	describe('props forwarding', () => {
