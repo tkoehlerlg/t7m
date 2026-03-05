@@ -52,7 +52,7 @@
 		"prepublishOnly": "bun format && NODE_ENV=production bun run build && bun run test"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.1.2",
+		"@biomejs/biome": "2.4.6",
 		"@types/bun": "^1.2.17",
 		"elysia": "^1.2",
 		"hono": "^4"

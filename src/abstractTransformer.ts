@@ -112,13 +112,13 @@ abstract class AbstractTransformer<
 
 	private _clearCache = (clearedFor: Set<AnyAbstractTransformer> = new Set()) => {
 		if (clearedFor.has(this)) return
-		Object.keys(this.cache).forEach(key => this.cache[key]?.clear())
+		for (const key of Object.keys(this.cache)) this.cache[key]?.clear()
 		clearedFor.add(this)
-		Object.keys(this.transformers).forEach(key => {
+		for (const key of Object.keys(this.transformers)) {
 			const transformer = this.transformers[key]!
-			if ('call' in transformer) return transformer.call()._clearCache(clearedFor)
-			transformer._clearCache(clearedFor)
-		})
+			if ('call' in transformer) transformer.call()._clearCache(clearedFor)
+			else transformer._clearCache(clearedFor)
+		}
 	}
 
 	// MARK: Transformer
