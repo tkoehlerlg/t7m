@@ -175,7 +175,7 @@ describe('AbstractTransformer - Advanced Tests', () => {
 			const duration = performance.now() - start
 
 			expect(results).toHaveLength(1000)
-			expect(duration).toBeLessThan(120) // Should complete in under 120ms
+			expect(duration).toBeLessThan(120) // Typically < 100ms, threshold loosened for GitHub CI runner variance
 
 			// Verify first and last results
 			expect(results[0]?.id).toBe('test-0')

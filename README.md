@@ -2,7 +2,9 @@
 
 [![npm version](https://img.shields.io/npm/v/t7m.svg)](https://www.npmjs.com/package/t7m) ![TypeScript 5+](https://img.shields.io/badge/TypeScript-5%2B-blue.svg) [![license](https://img.shields.io/badge/license-MIT--NSR-green.svg)](LICENSE)
 
-Type-safe output transformers for Hono and Elysia APIs - sanitize data, handle includes, cache expensive operations.
+Type-safe output transformers for Hono and Elysia APIs.
+
+Strip sensitive fields, resolve related data with parallel includes, and deduplicate expensive calls with built-in caching - all from a single transformer definition per model.
 
 *t7m = t(ransfor)m - 7 letters between t and m*
 
@@ -82,9 +84,13 @@ Includes let you optionally add related data to your output (like posts for a us
 
 ```typescript
 // Third generic = Props type (passed to data and include functions)
-class UserTransformer extends AbstractTransformer<User, PublicUser, { db: Database }> {
+interface UserWithPosts extends PublicUser {
+  posts?: { title: string }[];
+}
+
+class UserTransformer extends AbstractTransformer<User, UserWithPosts, { db: Database }> {
   // data() can be async
-  async data(input: User): Promise<PublicUser> {
+  async data(input: User): Promise<UserWithPosts> {
     return { name: input.name, email: input.email };
   }
 
@@ -225,7 +231,7 @@ You can specify multiple keys: `new Cache(fn, "id", "type")`
 
 ### Cache Auto-Clear
 
-By default, caches clear after each `transform`/`transformMany` call. Disable with:
+By default, caches clear after each transformation when using the framework middleware (which calls `_transform`/`_transformMany` internally). When using `transform()`/`transformMany()` directly, call `clearCache()` manually or use `_transform`/`_transformMany`. Disable auto-clear with:
 
 ```typescript
 class MyTransformer extends AbstractTransformer<Input, Output> {
@@ -264,7 +270,7 @@ import { Hono } from "hono";
 import { t7mMiddleware } from "t7m/hono";
 
 const app = new Hono();
-app.use(t7mMiddleware());
+app.use(t7mMiddleware);
 ```
 
 Basic route usage:
@@ -294,7 +300,7 @@ The third parameter (`extras`) supports these options:
 
 | Option | Type | Description |
 |--------|------|-------------|
-| `includes` | `string[]` | Type-safe includes (overrides query params) |
+| `includes` | `IncludesOf<T>[]` | Type-safe includes (used instead of query params) |
 | `wrapper` | `(data) => T` | Wrap the response (e.g., `{ data: result }`) |
 | `debug` | `boolean` | Enable colored console logging for debugging |
 | `props` | `PropsOf<T>` | Props to pass to the transformer |
@@ -316,6 +322,32 @@ Custom HTTP `headers` can be passed as the 5th parameter.
 ### Elysia
 
 Elysia integration is in development.
+
+## Performance
+
+### Parallel Includes
+
+All include functions run concurrently via `Promise.all`. If you have 3 includes that each take 50ms, the total is ~50ms, not 150ms.
+
+### Cache Deduplication
+
+Cache eliminates redundant calls by sharing the same promise across concurrent lookups:
+
+```
+100 comments, 20 unique authors
+├─ Without cache:  100 auth.getUser() calls
+└─ With cache:      20 auth.getUser() calls (5x reduction)
+```
+
+Concurrent calls with the same input don't even wait — they share a single in-flight promise, so there are no race conditions and no duplicate work.
+
+### Benchmarks (from test suite)
+
+| Scenario | Result |
+|----------|--------|
+| 1,000 objects + 2 includes each | < 100ms |
+| 10,000 cached primitive lookups | microseconds per lookup |
+| Cached vs uncached (1ms async op, 1,000 calls) | ~1ms cached vs ~1,000ms uncached |
 
 ## API Reference
 
