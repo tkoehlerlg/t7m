@@ -49,12 +49,13 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.1.2",
-		"@types/bun": "latest"
+		"@types/bun": "latest",
+		"hono": "^4"
 	},
 	"peerDependencies": {
 		"typescript": "^5",
 		"elysia": "^1.2",
-		"hono": "^4"
+		"hono": ""
 	},
 	"peerDependenciesMeta": {
 		"elysia": {
