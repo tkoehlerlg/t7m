@@ -1,6 +1,6 @@
 {
 	"name": "t7m",
-	"module": "src/index.ts",
+	"module": "dist/index.js",
 	"type": "module",
 	"author": {
 		"name": "Torben Koehler"
@@ -19,19 +19,17 @@
 	"exports": {
 		".": {
 			"import": "./dist/index.js",
-			"require": "./dist/index.js",
 			"types": "./dist/index.d.ts"
 		},
 		"./hono": {
 			"import": "./dist/hono/index.js",
-			"require": "./dist/hono/index.js",
 			"types": "./dist/hono/index.d.ts"
 		},
 		"./elysia": {
 			"import": "./dist/elysia/index.js",
-			"require": "./dist/elysia/index.js",
 			"types": "./dist/elysia/index.d.ts"
-		}
+		},
+		"./*": null
 	},
 	"typesVersions": {
 		"*": {
@@ -42,7 +40,7 @@
 	"types": "dist/index.d.ts",
 	"files": ["dist"],
 	"scripts": {
-		"build": "tsc --declaration --emitDeclarationOnly --outDir dist && NODE_ENV=production bun build src/index.ts src/hono/index.ts src/elysia/index.ts --outdir dist --target node --external hono --external elysia",
+		"build": "rm -rf dist && tsc --declaration --emitDeclarationOnly --outDir dist && NODE_ENV=production bun build src/index.ts src/hono/index.ts src/elysia/index.ts --outdir dist --target node --external hono --external elysia",
 		"dev": "bun --watch src/index.ts",
 		"format": "biome format --write",
 		"lint": "biome lint && biome check",
@@ -55,7 +53,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.1.2",
-		"@types/bun": "latest",
+		"@types/bun": "^1.2.17",
 		"elysia": "^1.2",
 		"hono": "^4"
 	},

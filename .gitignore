@@ -35,3 +35,12 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Claude Superpowers
 docs/plans/**
+
+# Private keys / certificates
+*.pem
+*.key
+*.cert
+
+# Local databases
+*.sqlite
+*.db

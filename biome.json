@@ -18,9 +18,16 @@
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"recommended": false,
-			"correctness": { "noUnusedVariables": "error" },
-			"style": { "noInferrableTypes": "off" },
+			"recommended": true,
+			"correctness": {
+				"noUnusedVariables": "error",
+				"noUnusedFunctionParameters": "off"
+			},
+			"style": {
+				"noInferrableTypes": "off",
+				"noNonNullAssertion": "off",
+				"useShorthandFunctionType": "off"
+			},
 			"suspicious": { "noExplicitAny": "warn" }
 		}
 	},
