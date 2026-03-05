@@ -8,7 +8,7 @@ import type { HeaderRecord, JSONRespondReturn } from './types'
 export const t7mMiddleware = createMiddleware(async (c, next) => {
 	const { include } = c.req.query()
 
-	c.transform = async function <
+	c.transform = async <
 		T extends AnyAbstractTransformer,
 		O extends { data: OutputOf<T> } | OutputOf<T> = OutputOf<T>,
 		U extends ContentfulStatusCode = ContentfulStatusCode,
@@ -22,10 +22,15 @@ export const t7mMiddleware = createMiddleware(async (c, next) => {
 		} & (PropsOf<T> extends undefined ? { props?: never } : { props: PropsOf<T> }),
 		status?: U,
 		headers?: HeaderRecord
-	): Promise<JSONRespondReturn<O, U>> {
+	): Promise<JSONRespondReturn<O, U>> => {
 		const { includes, wrapper, debug, props } = extras
 		if (debug) log('Transforming (One):\n', input, transformer.constructor.name)
-		const processedIncludes = includes || include?.split(',').map(s => s.trim())
+		const processedIncludes =
+			includes ||
+			include
+				?.split(',')
+				.map(s => s.trim())
+				.filter(Boolean)
 		if (debug && processedIncludes) log('Includes Received:', processedIncludes, transformer.constructor.name)
 		const transformed: OutputOf<T> = await transformer._transform({
 			input,
@@ -38,7 +43,7 @@ export const t7mMiddleware = createMiddleware(async (c, next) => {
 		return c.json(response, status, headers)
 	}
 
-	c.transformMany = async function <
+	c.transformMany = async <
 		T extends AnyAbstractTransformer,
 		O extends { data: OutputOf<T>[] } | OutputOf<T>[] = OutputOf<T>[],
 		U extends ContentfulStatusCode = ContentfulStatusCode,
@@ -52,10 +57,15 @@ export const t7mMiddleware = createMiddleware(async (c, next) => {
 		} & (PropsOf<T> extends undefined ? { props?: never } : { props: PropsOf<T> }),
 		status?: U,
 		headers?: HeaderRecord
-	): Promise<JSONRespondReturn<O, U>> {
+	): Promise<JSONRespondReturn<O, U>> => {
 		const { includes, wrapper, debug, props } = extras
 		if (debug) log('Transforming (Many):\n', inputs, transformer.constructor.name)
-		const processedIncludes = includes || include?.split(',').map(s => s.trim())
+		const processedIncludes =
+			includes ||
+			include
+				?.split(',')
+				.map(s => s.trim())
+				.filter(Boolean)
 		if (debug && processedIncludes) log('Includes Received:', processedIncludes, transformer.constructor.name)
 		const transformed: OutputOf<T>[] = await transformer._transformMany({
 			inputs,
