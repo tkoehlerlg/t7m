@@ -46,7 +46,6 @@ export const t7mMiddleware = createMiddleware(async (c, next) => {
 		if (debug) log('Transformed (One) ✅:\n', transformed, transformer.constructor.name)
 		const response: O = wrapper ? wrapper(transformed) : transformed
 		if (debug) log('Response (One) ✅:\n', response, transformer.constructor.name)
-		// @ts-expect-error Hono's json method has complex overloads that don't align with our return type
 		return c.json(response, status, headers)
 	}
 
