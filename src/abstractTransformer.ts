@@ -28,7 +28,7 @@ abstract class AbstractTransformer<
 	Props extends Record<string, unknown> | undefined = undefined,
 	Includes extends keyof OnlyPossiblyUndefined<TOutput> = keyof OnlyPossiblyUndefined<TOutput>,
 > {
-	protected clearCacheOnTransform: boolean
+	protected readonly clearCacheOnTransform: boolean
 	private readonly semaphore?: Semaphore
 
 	// MARK: Constructor
@@ -121,62 +121,22 @@ abstract class AbstractTransformer<
 		})
 	}
 
-	// Executed in child transformers to prevent them from clearing cache mid-transform
-	private originalClearCacheOnTransform: boolean | null = null
-
-	private disableClearCacheForTransformers = (visited: Set<AnyAbstractTransformer>) => {
-		if (visited.has(this)) return // Already visited, prevent infinite loop
-		visited.add(this)
-		// Only backup if not already backed up (prevents overwriting with already-disabled value)
-		if (this.originalClearCacheOnTransform === null) this.originalClearCacheOnTransform = this.clearCacheOnTransform
-		this.clearCacheOnTransform = false
-		Object.keys(this.transformers).forEach(key => {
-			const transformer = this.transformers[key]!
-			if ('call' in transformer) {
-				transformer.call().disableClearCacheForTransformers(visited)
-			} else transformer.disableClearCacheForTransformers(visited)
-		})
-	}
-
-	private restoreClearCacheForTransformers = (visited: Set<AnyAbstractTransformer>) => {
-		if (visited.has(this)) return
-		visited.add(this)
-		if (this.originalClearCacheOnTransform !== null) {
-			this.clearCacheOnTransform = this.originalClearCacheOnTransform
-			this.originalClearCacheOnTransform = null
-		}
-		Object.keys(this.transformers).forEach(key => {
-			const transformer = this.transformers[key]!
-			if ('call' in transformer) {
-				transformer.call().restoreClearCacheForTransformers(visited)
-			} else transformer.restoreClearCacheForTransformers(visited)
-		})
-	}
-
 	// MARK: Transformer
 	transformers: Record<string, AnyAbstractTransformer | Cache<() => AnyAbstractTransformer>> = {}
 
-	private onBeforeTransform = () => {
-		// Already executed by parent transformer, skip
-		if (this.originalClearCacheOnTransform !== null) return
-		const visited = new Set<AnyAbstractTransformer>([this])
-		Object.keys(this.transformers).forEach(key => {
-			const transformer = this.transformers[key]!
-			if ('call' in transformer) {
-				transformer.call().disableClearCacheForTransformers(visited)
-			} else transformer.disableClearCacheForTransformers(visited)
-		})
-	}
+	// Tracks how many _transform/_transformMany calls are currently active on this node (or any ancestor).
+	// Cache is only cleared when this reaches 0, preventing premature clearing during concurrent transforms.
+	private activeTransforms = 0
 
-	private onAfterTransform = () => {
-		// Was executed by parent, parent will restore
-		if (this.originalClearCacheOnTransform !== null) return
-		const visited = new Set<AnyAbstractTransformer>([this])
+	private adjustActiveTransforms = (delta: 1 | -1, visited: Set<AnyAbstractTransformer> = new Set()) => {
+		if (visited.has(this)) return
+		visited.add(this)
+		this.activeTransforms += delta
 		Object.keys(this.transformers).forEach(key => {
 			const transformer = this.transformers[key]!
 			if ('call' in transformer) {
-				transformer.call().restoreClearCacheForTransformers(visited)
-			} else transformer.restoreClearCacheForTransformers(visited)
+				transformer.call().adjustActiveTransforms(delta, visited)
+			} else transformer.adjustActiveTransforms(delta, visited)
 		})
 	}
 
@@ -233,11 +193,13 @@ abstract class AbstractTransformer<
 	}): Promise<TOutput> {
 		const { input, props, includes, unsafeIncludes } = params
 		const combinedIncludes = [...(includes || []), ...(unsafeIncludes || [])]
-		this.onBeforeTransform()
-		const output = await this.__transform(input, props, combinedIncludes)
-		if (this.clearCacheOnTransform) this.clearCache()
-		this.onAfterTransform()
-		return output
+		this.adjustActiveTransforms(1)
+		try {
+			return await this.__transform(input, props, combinedIncludes)
+		} finally {
+			this.adjustActiveTransforms(-1)
+			if (this.activeTransforms === 0 && this.clearCacheOnTransform) this.clearCache()
+		}
 	}
 
 	/**
@@ -253,11 +215,13 @@ abstract class AbstractTransformer<
 	}): Promise<TOutput[]> {
 		const { inputs, props, includes, unsafeIncludes } = params
 		const combinedIncludes = [...(includes || []), ...(unsafeIncludes || [])]
-		this.onBeforeTransform()
-		const outputArray = await Promise.all(inputs.map(input => this.runTransform(input, props, combinedIncludes)))
-		if (this.clearCacheOnTransform) this.clearCache()
-		this.onAfterTransform()
-		return outputArray
+		this.adjustActiveTransforms(1)
+		try {
+			return await Promise.all(inputs.map(input => this.runTransform(input, props, combinedIncludes)))
+		} finally {
+			this.adjustActiveTransforms(-1)
+			if (this.activeTransforms === 0 && this.clearCacheOnTransform) this.clearCache()
+		}
 	}
 
 	// Internal transformation function
