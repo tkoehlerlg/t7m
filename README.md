@@ -343,7 +343,7 @@ Elysia integration is in development.
 
 ## Author
 
-Created and maintained by [Torben Koehler](https://github.com/tkoehlerlg). Feel free to reach out via [GitHub](https://github.com/tkoehlerlg) or [LinkedIn](https://www.linkedin.com/in/torben-k%C3%B6hler-b79ab724a/).
+Created and maintained by [Torben Köhler](https://github.com/tkoehlerlg). Feel free to reach out via [GitHub](https://github.com/tkoehlerlg) or [LinkedIn](https://www.linkedin.com/in/torben-k%C3%B6hler-b79ab724a/).
 
 ## License
 
