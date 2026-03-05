@@ -1,42 +1,10 @@
-# t7m - Transform 🔄
+# t7m
 
-The ultimate transformer library for Elysia and Hono.
+[![npm version](https://img.shields.io/npm/v/t7m.svg)](https://www.npmjs.com/package/t7m) ![TypeScript 5+](https://img.shields.io/badge/TypeScript-5%2B-blue.svg) [![license](https://img.shields.io/badge/license-MIT--NSR-green.svg)](LICENSE)
 
-## Core Goals 📚
+Type-safe output transformers for Hono and Elysia APIs — sanitize data, handle includes, cache expensive operations.
 
-- Simplify output transformation
-- Maximize security
-- Provide maximum flexibility
-- Type safe transformations
-
-## Concept 🧠
-
-### The Problem
-
-Your database models contain sensitive data you shouldn't expose (IDs, passwords, internal flags). Every API endpoint needs to:
-1. Strip sensitive fields
-2. Optionally include related data (user's posts, comment's author)
-3. Do this consistently everywhere
-
-Without structure, you end up with transformation logic scattered across your codebase—easy to forget a field, expose something you shouldn't, or handle includes inconsistently.
-
-### The Solution
-
-t7m gives you a single place to define how each model transforms to its public form. Type-safe, consistent, with built-in support for optional includes and caching.
-
-### Where to use t7m?
-
-Any API returning database data. Especially useful for APIs with includes (related data). Built with serverless in mind, but works anywhere.
-
-## Contents
-
-- [Quick Start](#quick-start)
-- [API Overview](#api-overview)
-- [AbstractTransformer](#abstracttransformer)
-- [Cache](#cache)
-- [Framework Integration](#framework-integration)
-- [Performance & Security](#performance--security)
-- [Author](#author)
+*t7m = t(ransfor)m — 7 letters between t and m*
 
 ## Quick Start
 
@@ -46,29 +14,39 @@ npm install t7m
 bun add t7m
 ```
 
-## API Overview
+```typescript
+import { AbstractTransformer } from "t7m";
 
-**AbstractTransformer:**
-| Method | Description |
-|--------|-------------|
-| `data(input, props?)` | Core transformation logic (required) |
-| `includesMap` | Define include handlers (optional) |
-| `cache` | Define caches for data fetching (optional) |
-| `transformers` | Register nested transformers for cache clearing (optional) |
-| `transform({input, includes?, props?})` | Transform single object |
-| `transformMany({inputs, includes?, props?})` | Transform array |
-| `clearCache()` | Clear all caches |
+type User = { id: number; name: string; email: string; password: string };
+type PublicUser = Omit<User, "id" | "password">;
 
-**Cache:**
-| Method | Description |
-|--------|-------------|
-| `new Cache(fn, ...keys?)` | Create cache (0 or 1 arg function) |
-| `call(...args)` | Call cached function |
-| `clear()` | Clear cache |
+class UserTransformer extends AbstractTransformer<User, PublicUser> {
+  data(input: User): PublicUser {
+    return { name: input.name, email: input.email };
+  }
+}
 
-## AbstractTransformer
+const transformer = new UserTransformer();
+const user: User = { id: 1, name: "Alice", email: "alice@example.com", password: "secret" };
+const result = await transformer.transform({ input: user });
+// { name: "Alice", email: "alice@example.com" } — sensitive fields stripped!
+```
 
-### Basic Usage
+## Why t7m?
+
+### The Problem
+
+Database models contain sensitive data you shouldn't expose (IDs, passwords, internal flags). Every API endpoint needs to strip fields, optionally include related data, and do this consistently. Without structure, transformation logic scatters across your codebase — easy to forget a field, expose something you shouldn't, or handle includes inconsistently.
+
+### The Solution
+
+t7m gives you a single place to define how each model transforms to its public form. Type-safe, consistent, with built-in support for optional includes and caching. Works anywhere — built with serverless in mind.
+
+## Basic Usage
+
+### Defining a Transformer
+
+Extend `AbstractTransformer` and implement the `data` method:
 
 ```typescript
 import { AbstractTransformer } from "t7m";
@@ -100,12 +78,13 @@ const publicUser = await transformer.transform({ input: user });
 
 ### Includes
 
-Includes let you optionally add related data to your output (like posts for a user, or author for a comment). Define handlers in `includesMap`—they only run when requested. All include functions run in parallel.
+Includes let you optionally add related data to your output (like posts for a user, or author for a comment). Define handlers in `includesMap` — they only run when requested. All include functions run in parallel.
 
 ```typescript
 // Third generic = Props type (passed to data and include functions)
 class UserTransformer extends AbstractTransformer<User, PublicUser, { db: Database }> {
-  data(input: User): PublicUser {
+  // data() can be async
+  async data(input: User): Promise<PublicUser> {
     return { name: input.name, email: input.email };
   }
 
@@ -131,6 +110,8 @@ Props are available in both `data(input, props)` and include functions `(input, 
 - Feature flags (e.g., `redactSensitiveData: boolean`)
 - Request context
 
+When your transformer defines a Props type, `props` becomes **required** in `transform()` and `transformMany()`. When no Props type is defined (the default), `props` cannot be passed.
+
 ### Unsafe Includes
 
 For dynamic includes from user input (e.g., query strings), use `unsafeIncludes`. They're not type-checked but handled gracefully at runtime:
@@ -140,6 +121,7 @@ await transformer.transform({
   input: user,
   includes: ["posts"],           // Type-safe
   unsafeIncludes: queryIncludes, // Runtime includes
+  props: { db },
 });
 ```
 
@@ -159,17 +141,29 @@ includesMap = {
 // → "author" not in UserTransformer's includesMap, so forwarded to PostTransformer
 ```
 
+## Type Utilities
+
+t7m exports utility types for extracting type information from transformer instances. Useful for writing generic functions and framework integrations.
+
+| Type | Description |
+|------|-------------|
+| `InputOf<T>` | Extract the input type from a transformer |
+| `OutputOf<T>` | Extract the output type from a transformer |
+| `PropsOf<T>` | Extract the props type from a transformer |
+| `IncludesOf<T>` | Extract the available include keys from a transformer |
+
+```typescript
+import type { InputOf, OutputOf } from "t7m";
+
+type UserInput = InputOf<UserTransformer>;   // User
+type UserOutput = OutputOf<UserTransformer>; // PublicUser
+```
+
 ## Cache
 
-### The Problem
+When transforming data, you often need to enrich it with external information. Cache wraps any function and ensures calls with the same input resolve only once. Concurrent calls share the same promise — no duplicate requests, no race conditions.
 
-When transforming data, you often need to enrich it with external information—profile pictures from Auth0, user details from an identity service, or related entities from your database.
-
-Imagine transforming 100 comments where 20 are from the same user. A naive implementation would call your auth provider 100 times. You only need to fetch each unique user once!
-
-### The Solution
-
-`Cache` wraps any function and ensures calls with the same input resolve only once. Concurrent calls share the same promise—no duplicate requests, no race conditions.
+### Basic Usage
 
 ```typescript
 import { AbstractTransformer, Cache } from "t7m";
@@ -199,7 +193,7 @@ await transformer.transformMany({ inputs: comments, includes: ["author"] });
 
 ### Zero-Argument Functions
 
-Cache also supports 0-arg functions—useful for deferring transformer instantiation (e.g., to avoid circular dependencies or reduce startup cost):
+Cache supports 0-arg functions — useful for deferring transformer instantiation (e.g., to avoid circular dependencies or reduce startup cost):
 
 ```typescript
 class ParentTransformer extends AbstractTransformer<Parent, PublicParent> {
@@ -213,7 +207,7 @@ class ParentTransformer extends AbstractTransformer<Parent, PublicParent> {
 }
 ```
 
-### Object Arguments & Selective Keys
+### Object Arguments and Selective Keys
 
 For object arguments, specify which keys to use for the cache key:
 
@@ -226,6 +220,8 @@ const cached = new Cache(
 await cached.call({ id: 1, timestamp: 100 });
 await cached.call({ id: 1, timestamp: 200 }); // Cache hit!
 ```
+
+You can specify multiple keys: `new Cache(fn, "id", "type")`
 
 ### Cache Auto-Clear
 
@@ -241,7 +237,7 @@ class MyTransformer extends AbstractTransformer<Input, Output> {
 
 ### Nested Transformer Cache Clearing
 
-Register nested transformers in `transformers` for cache clearing propagation. Parent clears all caches only after transformation completes—handled internally:
+Register nested transformers in `transformers` for cache clearing propagation. Parent clears all caches only after transformation completes — handled internally:
 
 ```typescript
 class PostTransformer extends AbstractTransformer<Post, PublicPost> {
@@ -255,18 +251,25 @@ class PostTransformer extends AbstractTransformer<Post, PublicPost> {
 }
 ```
 
+Circular references between transformers are handled safely — cache clearing uses cycle detection to prevent infinite loops.
+
 ## Framework Integration
 
-### Hono 🔥
+### Hono
+
+#### Setup
 
 ```typescript
 import { Hono } from "hono";
 import { t7mMiddleware } from "t7m/hono";
 
 const app = new Hono();
-
 app.use(t7mMiddleware());
+```
 
+Basic route usage:
+
+```typescript
 app.get("/users", async (c) => {
   const users = await db.users;
   return c.transformMany(users, new UserTransformer(), {}, 200);
@@ -274,31 +277,74 @@ app.get("/users", async (c) => {
 });
 ```
 
-### Elysia 🦊
+#### Automatic Query Parameter Parsing
 
-Coming soon.
+The middleware automatically reads `?include=` from the query string and passes them as includes to the transformer.
 
-## Performance & Security
+```
+GET /users?include=posts,comments
+// Automatically applies includes: ["posts", "comments"]
+```
 
-**Performance:**
-- All include functions run in parallel
-- Async supported in both `data` and include functions
-- Reuse transformer instances for better performance
+No additional code needed — just use the middleware.
 
-**Security:**
-- Prevents exposing sensitive data (like database IDs) by design
-- Consistent transformation everywhere—no accidental data leaks
-- Use transformers as the single source of truth for your API output
+#### Extras
 
-**Safety Features:**
-- `unsafeIncludes` are safe—just not type-checked
-- Automatic duplicate handling between `includes` and `unsafeIncludes`
-- Include errors are wrapped with descriptive messages
+The third parameter (`extras`) supports these options:
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `includes` | `string[]` | Type-safe includes (overrides query params) |
+| `wrapper` | `(data) => T` | Wrap the response (e.g., `{ data: result }`) |
+| `debug` | `boolean` | Enable colored console logging for debugging |
+| `props` | `PropsOf<T>` | Props to pass to the transformer |
+
+Example with wrapper and debug:
+
+```typescript
+app.get("/users", async (c) => {
+  const users = await db.users;
+  return c.transformMany(users, new UserTransformer(), {
+    wrapper: (data) => ({ data, count: data.length }),
+    debug: true,
+  }, 200);
+});
+```
+
+Custom HTTP `headers` can be passed as the 5th parameter.
+
+### Elysia
+
+Elysia integration is in development.
+
+## API Reference
+
+### AbstractTransformer
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `data(input, props)` | `protected abstract` | Core transformation logic (must implement). Can return `TOutput` or `Promise<TOutput>`. |
+| `includesMap` | `protected` | Map of include handlers. Each handler receives `(input, props, forwardedIncludes)`. |
+| `cache` | `public readonly` | Record of Cache instances for data fetching. |
+| `transformers` | `public` | Register nested transformers for cache clearing propagation. |
+| `transform({input, includes?, unsafeIncludes?, props?*})` | `public` | Transform a single object. |
+| `transformMany({inputs, includes?, unsafeIncludes?, props?*})` | `public` | Transform an array of objects. |
+| `clearCache()` | `public` | Clear all caches (including nested transformers). |
+
+\*`props` is required when the transformer defines a Props type, optional otherwise.
+
+### Cache
+
+| Method | Description |
+|--------|-------------|
+| `new Cache(fn, ...keys)` | Create a cache. `fn` must take 0 or 1 argument. `keys` specifies which object properties to use as cache key (optional, accepts multiple keys). |
+| `call(...args)` | Call the cached function. Same-input calls return cached result. Concurrent calls share the same promise. |
+| `clear()` | Clear all cached results. |
 
 ## Author
 
-Props to me for writing this here ^^. If you'd like to learn more about me just go to my github profile: https://github.com/tkoehlerlg or google me (Torben Köhler, the redhead) and send me a message on LinkedIn or whatever we will use in the future.
+Created and maintained by [Torben Koehler](https://github.com/tkoehlerlg). Feel free to reach out via [GitHub](https://github.com/tkoehlerlg) or [LinkedIn](https://www.linkedin.com/in/torben-k%C3%B6hler-b79ab724a/).
 
 ## License
 
-[MIT+NSR](LICENSE)
+[MIT-NSR](LICENSE)
