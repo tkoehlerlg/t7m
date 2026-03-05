@@ -401,6 +401,10 @@ describe('t7mMiddleware', () => {
 	// 8b. debug gate without T7M_DEBUG env var
 	// -------------------------------------------------------
 	describe('debug gate without T7M_DEBUG env var', () => {
+		afterAll(() => {
+			delete process.env.T7M_DEBUG
+		})
+
 		it('should not call console.log when debug is true but T7M_DEBUG is not set', async () => {
 			delete process.env.T7M_DEBUG
 

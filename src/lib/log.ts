@@ -11,7 +11,7 @@ export const log = (message: string, data?: unknown, transformerName?: string) =
 			try {
 				jsonData = JSON.stringify(data, null, 2).substring(0, 300)
 			} catch {
-				jsonData = String(data)
+				jsonData = String(data).substring(0, 300)
 			}
 		}
 		console.log(T7M_PREFIX, nameTag, message, jsonData)

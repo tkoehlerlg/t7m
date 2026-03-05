@@ -335,8 +335,12 @@ describe('Cache edge cases', () => {
 			expect(callCount).toBe(2)
 		})
 
-		it('should still return results with maxSize=0', async () => {
-			const fn = async (n: number) => n * 10
+		it('should still return cached results with maxSize=0', async () => {
+			let callCount = 0
+			const fn = async (n: number) => {
+				callCount++
+				return n * 10
+			}
 			const cache = new Cache(fn)
 			cache.maxSize = 0
 
@@ -344,6 +348,7 @@ describe('Cache edge cases', () => {
 			const r2 = await cache.call(5)
 			expect(r1).toBe(50)
 			expect(r2).toBe(50)
+			expect(callCount).toBe(1)
 		})
 	})
 

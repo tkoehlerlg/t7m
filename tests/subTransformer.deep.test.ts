@@ -585,6 +585,47 @@ describe('SubTransformer Deep Tests', () => {
 			expect(clearSpy).toHaveBeenCalledTimes(1)
 		})
 
+		it('should still decrement activeTransforms and clear cache when one _transform rejects', async () => {
+			let resolveGood!: () => void
+			const deferredGood = new Promise<void>(r => {
+				resolveGood = r
+			})
+
+			class FailingTransformer extends AbstractTransformer<number, { val: number; slow?: string }> {
+				data(input: number) {
+					return { val: input }
+				}
+
+				includesMap = {
+					slow: async (input: number) => {
+						if (input === 1) throw new Error('include failed')
+						await deferredGood
+						return `slow-${input}`
+					},
+				}
+			}
+
+			const transformer = new FailingTransformer()
+			const clearSpy = spyOn(transformer, 'clearCache')
+
+			// Start two concurrent _transform calls — input 1 will reject
+			const p1 = transformer._transform({ input: 1, props: undefined, unsafeIncludes: ['slow'] })
+			const p2 = transformer._transform({ input: 2, props: undefined, unsafeIncludes: ['slow'] })
+
+			// p1 rejects immediately
+			await expect(p1).rejects.toThrow('include failed')
+
+			// Cache should NOT have been cleared yet (p2 still active)
+			expect(clearSpy).not.toHaveBeenCalled()
+
+			// Complete p2
+			resolveGood()
+			await p2
+
+			// Now cache should have been cleared (activeTransforms reached 0)
+			expect(clearSpy).toHaveBeenCalledTimes(1)
+		})
+
 		it('should produce correct results from concurrent transforms', async () => {
 			let resolve1!: () => void
 			let resolve2!: () => void
