@@ -55,7 +55,7 @@ skills:
         correct_pattern: |
           app.get('/users/:id', async (c) => {
             const user = await getUser(c.req.param('id'))
-            return c.transform(user, userTransformer)
+            return c.transform(user, userTransformer, {})
           })
         source: 'src/hono/middleware.ts'
         priority: 'CRITICAL'
@@ -88,7 +88,7 @@ skills:
           app.use(t7mMiddleware)
         correct_pattern: |
           app.use(t7mMiddleware)
-          app.get('/users', async (c) => c.transform(user, transformer))
+          app.get('/users', async (c) => c.transform(user, transformer, {}))
         source: 'src/hono/middleware.ts'
         priority: 'CRITICAL'
         status: 'active'
@@ -96,9 +96,9 @@ skills:
       - mistake: 'Returning c.transform result inside c.json()'
         mechanism: 'c.transform() already returns a typed JSON response — wrapping it in c.json() double-serializes'
         wrong_pattern: |
-          return c.json(await c.transform(user, transformer))
+          return c.json(await c.transform(user, transformer, {}))
         correct_pattern: |
-          return c.transform(user, transformer)
+          return c.transform(user, transformer, {})
         source: 'src/hono/middleware.ts'
         priority: 'HIGH'
         status: 'active'
@@ -275,14 +275,14 @@ skills:
       - 'Deploy t7m to Cloudflare Workers within subrequest limits'
     failure_modes:
       - mistake: 'No concurrency limit on Cloudflare Workers'
-        mechanism: 'Cloudflare Workers have a 50 subrequest limit per invocation — unbounded transformMany with external calls will hit this'
+        mechanism: 'Cloudflare Workers have strict subrequest limits (6 concurrent, 50 total) — unbounded transformMany with external calls will hit this'
         wrong_pattern: |
           class UserTransformer extends AbstractTransformer<In, Out> {
             constructor() { super() }
           }
         correct_pattern: |
           class UserTransformer extends AbstractTransformer<In, Out> {
-            constructor() { super({ concurrency: 10 }) }
+            constructor() { super({ concurrency: 5 }) }
           }
         source: 'maintainer interview'
         priority: 'CRITICAL'
