@@ -1,0 +1,78 @@
+# skills/_artifacts/skill_tree.yaml
+library:
+  name: 't7m'
+  version: '1.0.0'
+  repository: 'https://github.com/tkoehlerlg/t7m'
+  description: 'TypeScript library for API output transformation with type-safe includes, caching, and concurrency control'
+generated_from:
+  domain_map: 'skills/_artifacts/domain_map.yaml'
+  skill_spec: 'skills/_artifacts/skill_spec.md'
+generated_at: '2026-03-15'
+
+skills:
+  - name: 'Hono Integration'
+    slug: 'hono-integration'
+    type: 'framework'
+    domain: 'framework-integration'
+    path: 'skills/hono-integration/SKILL.md'
+    description: >
+      Set up t7mMiddleware in a Hono app. Covers c.transform(), c.transformMany(),
+      extras object (includes, wrapper, debug, props), query-based includes
+      (?include=), status codes, and response headers. Use when wiring t7m into
+      Hono routes.
+    requires:
+      - 'build-transformer'
+    sources:
+      - 'tkoehlerlg/t7m:src/hono/middleware.ts'
+      - 'tkoehlerlg/t7m:src/hono/augment.ts'
+      - 'tkoehlerlg/t7m:src/hono/types.ts'
+
+  - name: 'Elysia Integration'
+    slug: 'elysia-integration'
+    type: 'framework'
+    domain: 'framework-integration'
+    path: 'skills/elysia-integration/SKILL.md'
+    description: >
+      Set up t7mPlugin in an Elysia app. Covers transform(), transformMany(),
+      extras object, query-based includes, plain data return (not Response).
+      Key difference from Hono: no status codes in transform, extras optional
+      when no props. Use when wiring t7m into Elysia routes.
+    requires:
+      - 'build-transformer'
+    sources:
+      - 'tkoehlerlg/t7m:src/elysia/plugin.ts'
+      - 'tkoehlerlg/t7m:src/elysia/types.ts'
+
+  - name: 'Build Transformer'
+    slug: 'build-transformer'
+    type: 'core'
+    domain: 'transformer-authoring'
+    path: 'skills/build-transformer/SKILL.md'
+    description: >
+      Create t7m transformers with AbstractTransformer. Covers data() method,
+      includesMap (optional output properties only), props (conditionally required),
+      Cache with .call(), nested transformers record, clearCacheOnTransform,
+      concurrency and includesConcurrency. Use when building or modifying
+      any transformer class.
+    sources:
+      - 'tkoehlerlg/t7m:src/abstractTransformer.ts'
+      - 'tkoehlerlg/t7m:src/lib/cache.ts'
+      - 'tkoehlerlg/t7m:src/lib/semaphore.ts'
+      - 'tkoehlerlg/t7m:src/types.ts'
+
+  - name: 'Production Readiness'
+    slug: 'production-readiness'
+    type: 'lifecycle'
+    domain: 'production-ops'
+    path: 'skills/production-readiness/SKILL.md'
+    description: >
+      Configure t7m for production. Covers concurrency limits (constructor option
+      for transformMany), includesConcurrency (class property for per-include
+      throttling), Cache maxSize, clearCacheOnTransform tuning, Cloudflare Workers
+      subrequest limits. Use before deploying t7m to production or Cloudflare.
+    requires:
+      - 'build-transformer'
+    sources:
+      - 'tkoehlerlg/t7m:src/abstractTransformer.ts'
+      - 'tkoehlerlg/t7m:src/lib/cache.ts'
+      - 'tkoehlerlg/t7m:src/lib/semaphore.ts'
