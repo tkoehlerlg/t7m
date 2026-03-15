@@ -33,7 +33,7 @@ app.use(t7mMiddleware)
 
 app.get('/users/:id', async (c) => {
 	const user = await getUser(c.req.param('id'))
-	return c.transform(user, userTransformer)
+	return c.transform(user, userTransformer, {})
 })
 ```
 
@@ -41,10 +41,12 @@ app.get('/users/:id', async (c) => {
 
 ### Return transformed single object
 
+The `extras` object (third argument) is always required in Hono — pass `{}` when you don't need any options. This differs from Elysia, where extras is optional.
+
 ```typescript
 app.get('/users/:id', async (c) => {
 	const user = await db.users.findUnique({ where: { id: c.req.param('id') } })
-	return c.transform(user, userTransformer)
+	return c.transform(user, userTransformer, {})
 })
 ```
 
@@ -53,7 +55,7 @@ app.get('/users/:id', async (c) => {
 ```typescript
 app.get('/users', async (c) => {
 	const users = await db.users.findMany()
-	return c.transformMany(users, userTransformer)
+	return c.transformMany(users, userTransformer, {})
 })
 ```
 
@@ -83,7 +85,7 @@ app.post('/users', async (c) => {
 })
 ```
 
-The full signature is `c.transform(input, transformer, extras?, status?, headers?)`.
+The full signature is `c.transform(input, transformer, extras, status?, headers?)`. The `extras` argument is always required.
 
 ## Common Mistakes
 
@@ -103,7 +105,7 @@ Correct:
 ```typescript
 app.get('/users/:id', async (c) => {
 	const user = await getUser(c.req.param('id'))
-	return c.transform(user, userTransformer)
+	return c.transform(user, userTransformer, {})
 })
 ```
 
@@ -124,7 +126,7 @@ Correct:
 
 ```typescript
 app.use(t7mMiddleware)
-app.get('/users', async (c) => c.transform(users, transformer))
+app.get('/users', async (c) => c.transform(users, transformer, {}))
 ```
 
 Hono applies middleware in registration order — routes registered before t7mMiddleware won't have c.transform() available.
@@ -136,13 +138,13 @@ Source: src/hono/middleware.ts
 Wrong:
 
 ```typescript
-return c.json(await c.transform(user, transformer))
+return c.json(await c.transform(user, transformer, {}))
 ```
 
 Correct:
 
 ```typescript
-return c.transform(user, transformer)
+return c.transform(user, transformer, {})
 ```
 
 c.transform() already returns a typed JSON response — wrapping in c.json() double-serializes the output.
@@ -164,6 +166,24 @@ return c.transform(user, transformer, { props: { db } })
 ```
 
 The third argument is the extras object containing `props`, `includes`, `wrapper`, and `debug` — not the props value directly.
+
+Source: src/hono/types.ts
+
+### HIGH Omitting the required extras argument
+
+Wrong:
+
+```typescript
+return c.transform(user, transformer)
+```
+
+Correct:
+
+```typescript
+return c.transform(user, transformer, {})
+```
+
+Unlike Elysia, the Hono `extras` argument is always required. Pass `{}` when you don't need includes, wrapper, debug, or props.
 
 Source: src/hono/types.ts
 

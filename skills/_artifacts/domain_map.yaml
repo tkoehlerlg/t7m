@@ -67,7 +67,17 @@ skills:
           return c.transform(user, userTransformer, { db })
         correct_pattern: |
           return c.transform(user, userTransformer, { props: { db } })
-        source: 'src/hono/middleware.ts'
+        source: 'src/hono/types.ts'
+        priority: 'HIGH'
+        status: 'active'
+
+      - mistake: 'Omitting the required extras argument'
+        mechanism: 'Unlike Elysia, Hono extras is always required — pass {} when no options needed'
+        wrong_pattern: |
+          return c.transform(user, transformer)
+        correct_pattern: |
+          return c.transform(user, transformer, {})
+        source: 'src/hono/types.ts'
         priority: 'HIGH'
         status: 'active'
 
@@ -135,6 +145,16 @@ skills:
           return transform(user, transformer)
         source: 'src/elysia/types.ts'
         priority: 'MEDIUM'
+        status: 'active'
+
+      - mistake: 'Passing props directly instead of in extras'
+        mechanism: 'The third argument is the extras object containing props, includes, wrapper, and debug — not the props value directly'
+        wrong_pattern: |
+          return transform(user, transformer, { db })
+        correct_pattern: |
+          return transform(user, transformer, { props: { db } })
+        source: 'src/elysia/types.ts'
+        priority: 'HIGH'
         status: 'active'
 
       - mistake: 'Trying to set status codes in transform return'

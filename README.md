@@ -34,7 +34,11 @@ Skills are versioned with t7m — the guidance always matches the library versio
 npx skills add tkoehlerlg/t7m
 ```
 
-Both methods work with Claude Code, Cursor, Codex, and other agents that support agent skills.
+### Claude Code Skill
+
+t7m also ships with a [Claude Code skill](https://code.claude.com/docs/en/skills) in `.claude/skills/build-transformer/` — it's loaded automatically when Claude Code detects t7m usage in your project.
+
+All methods work with Claude Code, Cursor, Codex, and other agents that support agent skills.
 
 ## Quick Start
 

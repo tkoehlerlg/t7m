@@ -14,29 +14,31 @@ t7m is a TypeScript library for transforming API output with type-safe includes,
 
 | Skill | Type | Domain | What it covers | Failure modes |
 | --- | --- | --- | --- | --- |
-| hono-integration | framework | framework-integration | t7mMiddleware, c.transform(), extras, query params, status codes | 4 |
-| elysia-integration | framework | framework-integration | t7mPlugin, transform(), extras, query params, plain data return | 3 |
+| hono-integration | framework | framework-integration | t7mMiddleware, c.transform(), extras (required), query params, status codes | 5 |
+| elysia-integration | framework | framework-integration | t7mPlugin, transform(), extras (optional when no props), query params, plain data return | 4 |
 | build-transformer | core | transformer-authoring | AbstractTransformer, data(), includes, props, cache, nested transformers, concurrency | 6 |
 | production-readiness | lifecycle | production-ops | concurrency limits, cache maxSize, clearCacheOnTransform, Cloudflare constraints | 3 |
 
 ## Failure Mode Inventory
 
-### Hono Integration (4 failure modes)
+### Hono Integration (5 failure modes)
 
 | # | Mistake | Priority | Source | Cross-skill? |
 | --- | --- | --- | --- | --- |
 | 1 | Calling transformer.transform() instead of c.transform() | CRITICAL | src/hono/middleware.ts | — |
-| 2 | Passing props as third argument instead of in extras | HIGH | src/hono/middleware.ts | — |
-| 3 | Not registering middleware before routes | CRITICAL | src/hono/middleware.ts | — |
-| 4 | Returning c.transform result inside c.json() | HIGH | src/hono/middleware.ts | — |
+| 2 | Passing props as third argument instead of in extras | HIGH | src/hono/types.ts | — |
+| 3 | Omitting the required extras argument | HIGH | src/hono/types.ts | — |
+| 4 | Not registering middleware before routes | CRITICAL | src/hono/middleware.ts | — |
+| 5 | Returning c.transform result inside c.json() | HIGH | src/hono/middleware.ts | — |
 
-### Elysia Integration (3 failure modes)
+### Elysia Integration (4 failure modes)
 
 | # | Mistake | Priority | Source | Cross-skill? |
 | --- | --- | --- | --- | --- |
 | 1 | Expecting a Response object like Hono | HIGH | src/elysia/plugin.ts | — |
 | 2 | Passing extras when no props needed | MEDIUM | src/elysia/types.ts | — |
-| 3 | Trying to set status codes in transform return | HIGH | src/elysia/plugin.ts | — |
+| 3 | Passing props directly instead of in extras | HIGH | src/elysia/types.ts | — |
+| 4 | Trying to set status codes in transform return | HIGH | src/elysia/plugin.ts | — |
 
 ### Build Transformer (6 failure modes)
 

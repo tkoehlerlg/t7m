@@ -126,12 +126,12 @@ cache = {
 
 ### Cloudflare Workers deployment
 
-Cloudflare Workers have a 50 subrequest limit per invocation. Set `concurrency` low enough that your batch transforms stay within this budget.
+Cloudflare Workers have strict subrequest limits (6 concurrent, 50 total per invocation). Set `concurrency` low enough that your batch transforms stay within this budget.
 
 ```typescript
 class ApiTransformer extends AbstractTransformer<ApiInput, ApiOutput> {
 	constructor() {
-		// Cloudflare: 50 subrequests max, leave headroom for other calls
+		// Cloudflare: 6 concurrent / 50 total subrequests, keep concurrency low
 		super({ concurrency: 5 })
 	}
 
@@ -166,7 +166,7 @@ class UserTransformer extends AbstractTransformer<UserInput, UserOutput> {
 }
 ```
 
-Cloudflare Workers have a 50 subrequest limit per invocation. Without concurrency limits, transformMany fires all items in parallel and exceeds this limit.
+Cloudflare Workers have strict subrequest limits (6 concurrent, 50 total per invocation). Without concurrency limits, transformMany fires all items in parallel and exceeds this limit.
 
 Source: maintainer interview
 
